@@ -5,7 +5,199 @@ import (
 	"strings"
 )
 
+type elemType int
+
+const (
+	NO_ELEM_TYPE = elemType(iota)
+	VOID_ELEM_TYPE
+	TEMPLATE_ELEM_TYPE
+	RAW_TEXT_ELEM_TYPE
+	ESCAPABLE_RAW_TEXT_ELEM_TYPE
+	FOREIGN_ELEM_TYPE
+	NORMAL_ELEM_TYPE
+)
+
+var elemTypeNames = map[elemType]string{
+	VOID_ELEM_TYPE:               "void",
+	TEMPLATE_ELEM_TYPE:           "template",
+	RAW_TEXT_ELEM_TYPE:           "raw text",
+	ESCAPABLE_RAW_TEXT_ELEM_TYPE: "escapable raw text",
+	FOREIGN_ELEM_TYPE:            "foreign", // no support yet
+	NORMAL_ELEM_TYPE:             "normal",
+}
 var safeTextReplacer = strings.NewReplacer("<", "&lt;", ">", "&gt;", "\"", "&quot", "'", "&quot")
+var voidElements = []string{
+	"area",
+	"base",
+	"br",
+	"col",
+	"embed",
+	"hr",
+	"img",
+	"input",
+	"link",
+	"meta",
+	"param",
+	"source",
+	"track",
+	"wbr",
+}
+var templateElements = []string{
+	"template",
+}
+var rawTextElements = []string{
+	"script",
+	"style",
+}
+var escapableRawTextElements = []string{
+	"textarea",
+	"title",
+}
+var normalElements = []string{
+	"html",
+	"base",
+	"head",
+	"link",
+	"meta",
+	"style",
+	"title",
+	"body",
+	"address",
+	"article",
+	"aside",
+	"footer",
+	"header",
+	"h1",
+	"h2",
+	"h3",
+	"h4",
+	"h5",
+	"h6",
+	"main",
+	"nav",
+	"section",
+	"blockquote",
+	"dd",
+	"div",
+	"dl",
+	"dt",
+	"figcaption",
+	"figure",
+	"hr",
+	"li",
+	"ol",
+	"p",
+	"pre",
+	"ul",
+	"a",
+	"abbr",
+	"b",
+	"bdi",
+	"bdo",
+	"br",
+	"cite",
+	"code",
+	"data",
+	"dfn",
+	"em",
+	"i",
+	"kbd",
+	"mark",
+	"q",
+	"rp",
+	"rt",
+	"ruby",
+	"s",
+	"samp",
+	"small",
+	"span",
+	"strong",
+	"sub",
+	"sup",
+	"time",
+	"u",
+	"var",
+	"wbr",
+	"area",
+	"audio",
+	"img",
+	"map",
+	"track",
+	"video",
+	"embed",
+	"iframe",
+	"object",
+	"param",
+	"picture",
+	"portal",
+	"source",
+	"svg",
+	"math",
+	"canvas",
+	"noscript",
+	"script",
+	"del",
+	"ins",
+	"caption",
+	"col",
+	"colgroup",
+	"table",
+	"tbody",
+	"td",
+	"tfoot",
+	"th",
+	"thead",
+	"tr",
+	"button",
+	"datalist",
+	"fieldset",
+	"form",
+	"input",
+	"label",
+	"legand",
+	"meter",
+	"optgroup",
+	"option",
+	"output",
+	"progress",
+	"select",
+	"textarea",
+	"details",
+	"dialog",
+	"menu",
+	"summary",
+	"slot",
+	"template",
+	// obsolete/deprecated
+	"acronym",
+	"applet",
+	"baseform",
+	"bgsound",
+	"big",
+	"blink",
+	"center",
+	"content",
+	"dir",
+	"font",
+	"frame",
+	"frameset",
+	"hgroup",
+	"image",
+	"keygen",
+	"marquee",
+	"menuitem",
+	"nobr",
+	"noembed",
+	"noframes",
+	"plaintext",
+	"rb",
+	"rtc",
+	"shadow",
+	"spacer",
+	"strike",
+	"tt",
+	"xmp",
+}
 
 const (
 	injectionType = iota
@@ -19,6 +211,7 @@ type (
 		key string
 	}
 	ElementNode struct {
+		typ      elemType
 		elem     string
 		props    [][2]string
 		children []*Node
@@ -63,11 +256,40 @@ func (fc *fallthroughContext) markInjection(key string) {
 	fc.precompiled = append(fc.precompiled, fmt.Sprintf("{{ %s }}", key))
 	fc.lastMappingIdx = idx
 }
-
+func elemTyp(name string) elemType {
+	for _, ve := range voidElements {
+		if name == ve {
+			return VOID_ELEM_TYPE
+		}
+	}
+	for _, te := range templateElements {
+		if name == te {
+			return TEMPLATE_ELEM_TYPE
+		}
+	}
+	for _, rte := range rawTextElements {
+		if name == rte {
+			return RAW_TEXT_ELEM_TYPE
+		}
+	}
+	for _, erte := range escapableRawTextElements {
+		if name == erte {
+			return ESCAPABLE_RAW_TEXT_ELEM_TYPE
+		}
+	}
+	for _, ne := range normalElements {
+		if name == ne {
+			return NORMAL_ELEM_TYPE
+		}
+	}
+	return NO_ELEM_TYPE
+}
 func Elem(name string, props [][2]string, children ...*Node) *Node { // repeat, or, optional, variant nodes
+	var et = elemTyp(name)
 	return &Node{
 		typ: elementType,
 		impl: &ElementNode{
+			typ:      et,
 			elem:     name,
 			props:    props,
 			children: children,
@@ -117,6 +339,11 @@ func (node *Node) writeTo(fc *fallthroughContext) {
 			sb.WriteString(pair[1])
 			sb.WriteRune('"')
 		}
+		if unpacked.typ == VOID_ELEM_TYPE {
+			sb.WriteString("/>")
+			fc.writeFragment(sb.String())
+			return
+		}
 		sb.WriteRune('>')
 		fc.writeFragment(sb.String())
 		for _, elem := range unpacked.children {
@@ -144,14 +371,11 @@ func (node *Node) Template() (template *Template) {
 	}
 }
 func (t *Template) CompileWith(replacements map[string]interface{}) string {
-	fragments := []string{}
-	for _, f := range t.precompiled {
-		fragments = append(fragments, f)
-	}
+	fragments := append([]string{}, t.precompiled...)
 	for key, idx := range t.markMapping {
 		unknownRepl, ok := replacements[key]
 		if !ok {
-			panic(fmt.Sprintf("replacement for `%s` key is not provied", key))
+			panic(fmt.Sprintf("replacement for \"%s\" key is not provied", key))
 		}
 		switch repl := unknownRepl.(type) {
 		case string:
