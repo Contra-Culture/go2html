@@ -227,7 +227,8 @@ type (
 		impl interface{}
 	}
 	Template struct {
-		root         *Node
+		name         string
+		nodes        []*Node
 		marks        []int
 		marksMapping map[string]int
 		precompiled  []string
@@ -406,27 +407,40 @@ func (node *Node) writeTo(btc *breakthroughContext) {
 		btc.report("error: wrong node type")
 	}
 }
-func (node *Node) Template() *Template {
-	nodeReport := &NodeReport{
-		Title:    node.title(),
-		Messages: []string{},
-		Children: []*NodeReport{},
-	}
-	template := &Template{
-		root:         node,
+func Tmplt(name string, nodes ...*Node) *Template {
+	return &Template{
+		name:         name,
+		nodes:        nodes,
 		marks:        []int{},
 		marksMapping: map[string]int{},
 		precompiled:  []string{},
-		report:       nodeReport,
+		report: &NodeReport{
+			Title:    fmt.Sprintf("TEMPLATE(%s) ROOT", name),
+			Messages: []string{},
+			Children: []*NodeReport{},
+		},
+	}
+}
+func (t *Template) isPrecompiled() bool {
+	return len(t.precompiled) > 0
+}
+func (t *Template) Precompile() *NodeReport {
+	if t.isPrecompiled() {
+		return t.report
 	}
 	btc := &breakthroughContext{
-		template,
-		nodeReport,
+		template:   t,
+		nodeReport: t.report,
 	}
-	node.writeTo(btc)
-	return template
+	for _, node := range t.nodes {
+		node.writeTo(btc.child(node.title()))
+	}
+	return t.report
 }
-func (t *Template) CompileWith(replacements map[string]interface{}) string {
+func (t *Template) Populate(replacements map[string]interface{}) string {
+	if !t.isPrecompiled() {
+		panic("template should be precompiled first")
+	}
 	fragments := append([]string{}, t.precompiled...)
 	for key, idx := range t.marksMapping {
 		unknownRepl, ok := replacements[key]
@@ -437,13 +451,10 @@ func (t *Template) CompileWith(replacements map[string]interface{}) string {
 		case string:
 			fragments[idx] = repl
 		case *Template:
-			fragments[idx] = repl.CompileWith(replacements)
+			fragments[idx] = repl.Populate(replacements)
 		default:
 			panic("wrong replacement type")
 		}
 	}
 	return strings.Join(fragments, "")
-}
-func (t *Template) Report() *NodeReport {
-	return t.report
 }
