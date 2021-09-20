@@ -11,10 +11,10 @@ const INJECTION_NODE_TITLE_TEMPLATE = "{{%s}}"
 func Injection(key string) *InjectionNode {
 	return &InjectionNode{key}
 }
-func (n *InjectionNode) title() string {
+func (n *InjectionNode) Title() string {
 	return fmt.Sprintf(INJECTION_NODE_TITLE_TEMPLATE, n.key)
 }
-func (n *InjectionNode) writeTo(btc *breakthroughContext) {
-	btc.markInjection(n.key)
-	btc.report("ok")
+func (n *InjectionNode) WriteTo(btc *BreakthroughContext) {
+	btc.MarkInjection(n.key)
+	btc.Report("ok")
 }

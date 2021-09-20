@@ -15,16 +15,17 @@ type (
 )
 
 const ELEMENT_NODE_TITLE_TEMPLATE = "<%s>"
+const (
+	NO_ELEM_TYPE = elemType(iota)
+	VOID_ELEM_TYPE
+	TEMPLATE_ELEM_TYPE
+	RAW_TEXT_ELEM_TYPE
+	ESCAPABLE_RAW_TEXT_ELEM_TYPE
+	FOREIGN_ELEM_TYPE
+	NORMAL_ELEM_TYPE
+)
 
 var (
-	elemTypeNames = map[elemType]string{
-		VOID_ELEM_TYPE:               "void",
-		TEMPLATE_ELEM_TYPE:           "template",
-		RAW_TEXT_ELEM_TYPE:           "raw text",
-		ESCAPABLE_RAW_TEXT_ELEM_TYPE: "escapable raw text",
-		FOREIGN_ELEM_TYPE:            "foreign", // no support yet
-		NORMAL_ELEM_TYPE:             "normal",
-	}
 	voidElements = []string{
 		"area",
 		"base",
@@ -235,31 +236,31 @@ func elemTyp(name string) elemType {
 	}
 	return NO_ELEM_TYPE
 }
-func (n *ElementNode) title() string {
+func (n *ElementNode) Title() string {
 	return fmt.Sprintf(ELEMENT_NODE_TITLE_TEMPLATE, n.elem)
 }
-func (n *ElementNode) writeTo(btc *breakthroughContext) {
-	btc.writeFragment(fmt.Sprintf("<%s", n.elem))
+func (n *ElementNode) WriteTo(btc *BreakthroughContext) {
+	btc.WriteFragment(fmt.Sprintf("<%s", n.elem))
 	if len(n.attrs) > 0 {
-		attrbtc := btc.child("attrs")
+		attrbtc := btc.Child("attrs")
 		for _, attr := range n.attrs {
-			attr.writeTo(attrbtc)
+			attr.WriteTo(attrbtc)
 		}
 	}
 	if n.typ == VOID_ELEM_TYPE {
-		btc.writeFragment("/>")
+		btc.WriteFragment("/>")
 		if len(n.children) != 0 {
-			btc.report("error: void element can't have children (children ignored)")
+			btc.Report("error: void element can't have children (children ignored)")
 			return
 		}
-		btc.report("ok: self-closing")
+		btc.Report("ok: self-closing")
 		return
 	}
-	btc.writeFragment(">")
-	btc.report("ok: opening")
+	btc.WriteFragment(">")
+	btc.Report("ok: opening")
 	for _, child := range n.children {
-		child.writeTo(btc.child(child.title()))
+		child.WriteTo(btc.Child(child.Title()))
 	}
-	btc.writeFragment(fmt.Sprintf("</%s>", n.elem))
-	btc.report("ok: closing")
+	btc.WriteFragment(fmt.Sprintf("</%s>", n.elem))
+	btc.Report("ok: closing")
 }

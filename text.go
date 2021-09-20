@@ -16,10 +16,10 @@ func Text(text string) *TextNode {
 func RawText(text string) *TextNode {
 	return &TextNode{text}
 }
-func (n *TextNode) title() string {
+func (n *TextNode) Title() string {
 	return TEXT_NODE_TITLE
 }
-func (n *TextNode) writeTo(btc *breakthroughContext) {
-	btc.writeFragment(n.text)
-	btc.report("ok")
+func (n *TextNode) WriteTo(btc *BreakthroughContext) {
+	btc.WriteFragment(n.text)
+	btc.Report("ok")
 }

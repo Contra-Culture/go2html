@@ -15,12 +15,12 @@ func AttrValueInjection(name string, injname string) *AttrValueInjectionNode {
 		injname,
 	}
 }
-func (n *AttrValueInjectionNode) title() string {
+func (n *AttrValueInjectionNode) Title() string {
 	return fmt.Sprintf(ATTR_VALUE_INJECTION_NODE_TITLE_TEMPLATE, n.injname)
 }
-func (n *AttrValueInjectionNode) writeTo(btc *breakthroughContext) {
-	btc.writeFragment(fmt.Sprintf(" %s=\"", n.name))
-	btc.markInjection(n.injname)
-	btc.writeFragment("\"")
-	btc.report("ok")
+func (n *AttrValueInjectionNode) WriteTo(btc *BreakthroughContext) {
+	btc.WriteFragment(fmt.Sprintf(" %s=\"", n.name))
+	btc.MarkInjection(n.injname)
+	btc.WriteFragment("\"")
+	btc.Report("ok")
 }

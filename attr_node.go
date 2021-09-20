@@ -15,10 +15,10 @@ func Attr(name string, value string) *AttrNode {
 		value,
 	}
 }
-func (n *AttrNode) title() string {
+func (n *AttrNode) Title() string {
 	return ATTR_NODE_TITLE
 }
-func (n *AttrNode) writeTo(btc *breakthroughContext) {
-	btc.writeFragment(fmt.Sprintf(" %s=\"%s\"", n.name, n.value))
-	btc.report("ok")
+func (n *AttrNode) WriteTo(btc *BreakthroughContext) {
+	btc.WriteFragment(fmt.Sprintf(" %s=\"%s\"", n.name, n.value))
+	btc.Report("ok")
 }
