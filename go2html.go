@@ -227,34 +227,59 @@ type (
 		impl interface{}
 	}
 	Template struct {
-		root        *Node
-		markMapping map[string]int
-		precompiled []string
+		root         *Node
+		marks        []int
+		marksMapping map[string]int
+		precompiled  []string
+		report       *NodeReport
 	}
-	fallthroughContext struct {
-		precompiled    []string
-		markMapping    map[string]int
-		lastMappingIdx int
+	NodeReport struct {
+		Title    string
+		Messages []string
+		Children []*NodeReport
+	}
+	breakthroughContext struct {
+		template   *Template
+		nodeReport *NodeReport
 	}
 )
 
-func (fc *fallthroughContext) writeFragment(f string) {
-	isLastElementReplacement := fc.lastMappingIdx == len(fc.precompiled)-1
-	if isLastElementReplacement || len(fc.precompiled) == 0 {
-		fc.precompiled = append(fc.precompiled, f)
+func (btc *breakthroughContext) report(message string) {
+	btc.nodeReport.Messages = append(btc.nodeReport.Messages, message)
+}
+func (btc *breakthroughContext) child(title string) *breakthroughContext {
+	nr := &NodeReport{
+		Title:    title,
+		Messages: []string{},
+		Children: []*NodeReport{},
+	}
+	btc.nodeReport.Children = append(btc.nodeReport.Children, nr)
+	return &breakthroughContext{
+		template:   btc.template,
+		nodeReport: nr,
+	}
+}
+func (btc *breakthroughContext) writeFragment(f string) {
+	t := btc.template
+	isLastElementReplacement := len(t.marks) > 0 && t.marks[len(t.marks)-1] == len(t.precompiled)-1
+	if isLastElementReplacement || len(t.precompiled) == 0 {
+		t.precompiled = append(t.precompiled, f)
 		return
 	}
-	lastIdx := len(fc.precompiled) - 1
-	fc.precompiled[lastIdx] = fmt.Sprintf("%s\n%s", fc.precompiled[lastIdx], f)
+	lastIdx := len(t.precompiled) - 1
+	t.precompiled[lastIdx] = fmt.Sprintf("%s%s", t.precompiled[lastIdx], f)
 }
-func (fc *fallthroughContext) markInjection(key string) {
-	idx := len(fc.precompiled)
-	if idx < 0 {
-		idx = 0
+func (btc *breakthroughContext) markInjection(key string) {
+	t := btc.template
+	mark := len(t.precompiled)
+	if mark < 0 {
+		mark = 0
 	}
-	fc.markMapping[key] = idx
-	fc.precompiled = append(fc.precompiled, fmt.Sprintf("{{ %s }}", key))
-	fc.lastMappingIdx = idx
+	t.marks = append(t.marks, mark)
+	t.marksMapping[key] = mark
+	t.precompiled = append(t.precompiled, fmt.Sprintf("{{ %s }}", key))
+	t.marks = append(t.marks, mark)
+	t.marksMapping[key] = mark
 }
 func elemTyp(name string) elemType {
 	for _, ve := range voidElements {
@@ -320,14 +345,30 @@ func RawText(text string) *Node {
 		typ:  textType,
 	}
 }
-func (node *Node) writeTo(fc *fallthroughContext) {
+func (node *Node) title() string {
 	switch unpacked := node.impl.(type) {
 	case *TextNode:
-		fc.writeFragment(unpacked.text)
+		return "\"text\""
 	case *CommentNode:
-		fc.writeFragment(fmt.Sprintf("<!-- %s  -->", unpacked.text))
+		return "<!---->"
 	case *InjectionNode:
-		fc.markInjection(unpacked.key)
+		return fmt.Sprintf("{{%s}}", unpacked.key)
+	case *ElementNode:
+		return fmt.Sprintf("<%s>", unpacked.elem)
+	}
+	return "!wrong node type!"
+}
+func (node *Node) writeTo(btc *breakthroughContext) {
+	switch unpacked := node.impl.(type) {
+	case *TextNode:
+		btc.writeFragment(unpacked.text)
+		btc.report("ok")
+	case *CommentNode:
+		btc.writeFragment(fmt.Sprintf("<!-- %s -->", unpacked.text))
+		btc.report("ok")
+	case *InjectionNode:
+		btc.markInjection(unpacked.key)
+		btc.report("ok")
 	case *ElementNode:
 		var sb strings.Builder
 		sb.WriteRune('<')
@@ -341,38 +382,53 @@ func (node *Node) writeTo(fc *fallthroughContext) {
 		}
 		if unpacked.typ == VOID_ELEM_TYPE {
 			sb.WriteString("/>")
-			fc.writeFragment(sb.String())
+			btc.writeFragment(sb.String())
+			if len(unpacked.children) != 0 {
+				btc.report("error: void element can't have children (children ignored)")
+				return
+			}
+			btc.report("ok: self-closing")
 			return
 		}
 		sb.WriteRune('>')
-		fc.writeFragment(sb.String())
+		btc.writeFragment(sb.String())
+		btc.report("ok: opening")
 		for _, elem := range unpacked.children {
-			elem.writeTo(fc)
+			elem.writeTo(btc.child(elem.title()))
 		}
 		sb.Reset()
 		sb.WriteString("</")
 		sb.WriteString(unpacked.elem)
 		sb.WriteRune('>')
-		fc.writeFragment(sb.String())
+		btc.writeFragment(sb.String())
+		btc.report("ok: closing")
 	default:
-		panic("wrong node type")
+		btc.report("error: wrong node type")
 	}
 }
-func (node *Node) Template() (template *Template) {
-	fc := &fallthroughContext{
-		markMapping: map[string]int{},
-		precompiled: []string{},
+func (node *Node) Template() *Template {
+	nodeReport := &NodeReport{
+		Title:    node.title(),
+		Messages: []string{},
+		Children: []*NodeReport{},
 	}
-	node.writeTo(fc)
-	return &Template{
-		root:        node,
-		markMapping: fc.markMapping,
-		precompiled: fc.precompiled,
+	template := &Template{
+		root:         node,
+		marks:        []int{},
+		marksMapping: map[string]int{},
+		precompiled:  []string{},
+		report:       nodeReport,
 	}
+	btc := &breakthroughContext{
+		template,
+		nodeReport,
+	}
+	node.writeTo(btc)
+	return template
 }
 func (t *Template) CompileWith(replacements map[string]interface{}) string {
 	fragments := append([]string{}, t.precompiled...)
-	for key, idx := range t.markMapping {
+	for key, idx := range t.marksMapping {
 		unknownRepl, ok := replacements[key]
 		if !ok {
 			panic(fmt.Sprintf("replacement for \"%s\" key is not provied", key))
@@ -387,4 +443,7 @@ func (t *Template) CompileWith(replacements map[string]interface{}) string {
 		}
 	}
 	return strings.Join(fragments, "")
+}
+func (t *Template) Report() *NodeReport {
+	return t.report
 }

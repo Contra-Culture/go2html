@@ -11,7 +11,13 @@ var _ = Describe("go2html", func() {
 		It("returns text node", func() {
 			textNode := Text("<html>\"text\"</html>")
 			Expect(textNode).NotTo(BeNil())
-			str := textNode.Template().CompileWith(nil)
+			t := textNode.Template()
+			r := t.Report()
+			Expect(r.Title).To(Equal("\"text\""))
+			Expect(r.Messages).To(HaveLen(1))
+			Expect(r.Messages[0]).To(Equal("ok"))
+			Expect(r.Children).To(HaveLen(0))
+			str := t.CompileWith(nil)
 			Expect(str).To(Equal("&lt;html&gt;&quottext&quot&lt;/html&gt;"))
 		})
 	})
@@ -19,7 +25,13 @@ var _ = Describe("go2html", func() {
 		It("returns text node", func() {
 			textNode := RawText("<html>\"text\"</html>")
 			Expect(textNode).NotTo(BeNil())
-			str := textNode.Template().CompileWith(nil)
+			t := textNode.Template()
+			r := t.Report()
+			Expect(r.Title).To(Equal("\"text\""))
+			Expect(r.Messages).To(HaveLen(1))
+			Expect(r.Messages[0]).To(Equal("ok"))
+			Expect(r.Children).To(HaveLen(0))
+			str := t.CompileWith(nil)
 			Expect(str).To(Equal("<html>\"text\"</html>"))
 		})
 	})
@@ -27,8 +39,14 @@ var _ = Describe("go2html", func() {
 		It("returns comment node", func() {
 			commentNode := Comment("comment")
 			Expect(commentNode).NotTo(BeNil())
-			str := commentNode.Template().CompileWith(nil)
-			Expect(str).To(Equal("<!-- comment  -->"))
+			t := commentNode.Template()
+			r := t.Report()
+			Expect(r.Title).To(Equal("<!---->"))
+			Expect(r.Messages).To(HaveLen(1))
+			Expect(r.Messages[0]).To(Equal("ok"))
+			Expect(r.Children).To(HaveLen(0))
+			str := t.CompileWith(nil)
+			Expect(str).To(Equal("<!-- comment -->"))
 		})
 	})
 	Describe("Injection()", func() {
@@ -38,7 +56,13 @@ var _ = Describe("go2html", func() {
 			Expect(func() {
 				injectionNode.Template().CompileWith(nil)
 			}).To(PanicWith("replacement for \"comment\" key is not provied"))
-			str := injectionNode.Template().CompileWith(map[string]interface{}{
+			t := injectionNode.Template()
+			r := t.Report()
+			Expect(r.Title).To(Equal("{{comment}}"))
+			Expect(r.Messages).To(HaveLen(1))
+			Expect(r.Messages[0]).To(Equal("ok"))
+			Expect(r.Children).To(HaveLen(0))
+			str := t.CompileWith(map[string]interface{}{
 				"comment": "some comment",
 			})
 			Expect(str).To(Equal("some comment"))
@@ -55,10 +79,33 @@ var _ = Describe("go2html", func() {
 					Injection("text"),
 				)
 				Expect(elemNode).NotTo(BeNil())
+				t := elemNode.Template()
+				r := t.Report()
+				Expect(r.Title).To(Equal("<div>"))
+				Expect(r.Messages).To(HaveLen(2))
+				Expect(r.Messages[0]).To(Equal("ok: opening"))
+				Expect(r.Messages[1]).To(Equal("ok: closing"))
+				Expect(r.Children).To(HaveLen(2))
+				chr1 := r.Children[0]
+				Expect(chr1.Title).To(Equal("<p>"))
+				Expect(chr1.Messages).To(HaveLen(2))
+				Expect(chr1.Messages[0]).To(Equal("ok: opening"))
+				Expect(chr1.Messages[1]).To(Equal("ok: closing"))
+				Expect(chr1.Children).To(HaveLen(1))
+				chr1_1 := chr1.Children[0]
+				Expect(chr1_1.Title).To(Equal("\"text\""))
+				Expect(chr1_1.Messages).To(HaveLen(1))
+				Expect(chr1_1.Messages[0]).To(Equal("ok"))
+				Expect(chr1_1.Children).To(BeEmpty())
+				chr2 := r.Children[1]
+				Expect(chr2.Title).To(Equal("{{text}}"))
+				Expect(chr2.Messages).To(HaveLen(1))
+				Expect(chr2.Messages[0]).To(Equal("ok"))
+				Expect(chr2.Children).To(HaveLen(0))
 				str := elemNode.Template().CompileWith(map[string]interface{}{
 					"text": "replacement text",
 				})
-				Expect(str).To(Equal("<div id=\"myID\" class=\"content\"><p>\n&lt;span&gt;text&lt;/span&gt;\n</p>replacement text</div>"))
+				Expect(str).To(Equal("<div id=\"myID\" class=\"content\"><p>&lt;span&gt;text&lt;/span&gt;</p>replacement text</div>"))
 			})
 		})
 		Context("when void elem", func() {
@@ -69,6 +116,12 @@ var _ = Describe("go2html", func() {
 						[2]string{"class", "content"},
 					})
 					Expect(elemNode).NotTo(BeNil())
+					t := elemNode.Template()
+					r := t.Report()
+					Expect(r.Title).To(Equal("<br>"))
+					Expect(r.Messages).To(HaveLen(1))
+					Expect(r.Messages[0]).To(Equal("ok: self-closing"))
+					Expect(r.Children).To(HaveLen(0))
 					str := elemNode.Template().CompileWith(nil)
 					Expect(str).To(Equal("<br id=\"myID\" class=\"content\"/>"))
 				})
@@ -83,7 +136,14 @@ var _ = Describe("go2html", func() {
 						Injection("text"),
 					)
 					Expect(elemNode).NotTo(BeNil())
-					str := elemNode.Template().CompileWith(nil)
+					t := elemNode.Template()
+					r := t.Report()
+					Expect(r.Title).To(Equal("<br>"))
+					Expect(r.Messages).To(HaveLen(1))
+					Expect(r.Messages[0]).To(Equal("error: void element can't have children (children ignored)"))
+					Expect(r.Children).To(HaveLen(0))
+
+					str := t.CompileWith(nil)
 					Expect(str).To(Equal("<br id=\"myID\" class=\"content\"/>"))
 				})
 			})
