@@ -89,12 +89,12 @@ var _ = Describe("go2html", func() {
 	Describe("Elem()", func() {
 		Context("when normal elem", func() {
 			It("returns element node", func() {
-				elemNode := Elem("div", []*Node{
+				elemNode := Elem("div", []Node{
 					Attr("id", "myID"),
 					Attr("class", "content"),
 				},
-					[]*Node{
-						Elem("p", []*Node{}, []*Node{
+					[]Node{
+						Elem("p", []Node{}, []Node{
 							Text("<span>text</span>"),
 						}),
 						Injection("text"),
@@ -123,16 +123,12 @@ var _ = Describe("go2html", func() {
 				Expect(chrn1_2.Messages).To(HaveLen(2))
 				Expect(chrn1_2.Messages[0]).To(Equal("ok: opening"))
 				Expect(chrn1_2.Messages[1]).To(Equal("ok: closing"))
-				Expect(chrn1_2.Children).To(HaveLen(2))
+				Expect(chrn1_2.Children).To(HaveLen(1))
 				chrn1_2_1 := chrn1_2.Children[0]
-				Expect(chrn1_2_1.Title).To(Equal("attrs"))
-				Expect(chrn1_2_1.Messages).To(BeEmpty())
+				Expect(chrn1_2_1.Title).To(Equal("\"text\""))
+				Expect(chrn1_2_1.Messages).To(HaveLen(1))
+				Expect(chrn1_2_1.Messages[0]).To(Equal("ok"))
 				Expect(chrn1_2_1.Children).To(BeEmpty())
-				chrn1_2_2 := chrn1_2.Children[1]
-				Expect(chrn1_2_2.Title).To(Equal("\"text\""))
-				Expect(chrn1_2_2.Messages).To(HaveLen(1))
-				Expect(chrn1_2_2.Messages[0]).To(Equal("ok"))
-				Expect(chrn1_2_2.Children).To(BeEmpty())
 				chrn1_3 := chrn1.Children[2]
 				Expect(chrn1_3.Title).To(Equal("{{text}}"))
 				Expect(chrn1_3.Messages).To(HaveLen(1))
@@ -147,12 +143,12 @@ var _ = Describe("go2html", func() {
 		Context("when void elem", func() {
 			Context("when has no children", func() {
 				It("returns element node", func() {
-					elemNode := Elem("br", []*Node{
+					elemNode := Elem("br", []Node{
 						Attr("id", "myID"),
 						Attr("class", "content"),
 						AttrInjection("test-attr"),
 					},
-						[]*Node{},
+						[]Node{},
 					)
 					Expect(elemNode).NotTo(BeNil())
 					t := Tmplt("test", elemNode)
@@ -180,11 +176,11 @@ var _ = Describe("go2html", func() {
 			})
 			Context("when has children", func() {
 				It("returns element node without children", func() {
-					elemNode := Elem("br", []*Node{
+					elemNode := Elem("br", []Node{
 						Attr("id", "myID"),
 						AttrValueInjection("class", "test-class"),
-					}, []*Node{
-						Elem("p", []*Node{}, []*Node{
+					}, []Node{
+						Elem("p", []Node{}, []Node{
 							Text("<span>text</span>"),
 						}),
 						Injection("text"),
