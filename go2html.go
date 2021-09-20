@@ -204,6 +204,9 @@ const (
 	elementType
 	textType
 	commentType
+	attrType
+	attrInjectionType
+	attrValueInjectionType
 )
 
 type (
@@ -213,7 +216,7 @@ type (
 	ElementNode struct {
 		typ      elemType
 		elem     string
-		props    [][2]string
+		attrs    []*Node
 		children []*Node
 	}
 	TextNode struct {
@@ -221,6 +224,17 @@ type (
 	}
 	CommentNode struct {
 		text string
+	}
+	AttrNode struct {
+		name  string
+		value string
+	}
+	AttrInjectionNode struct {
+		injname string
+	}
+	AttrValueInjectionNode struct {
+		name    string
+		injname string
 	}
 	Node struct {
 		typ  int
@@ -310,14 +324,39 @@ func elemTyp(name string) elemType {
 	}
 	return NO_ELEM_TYPE
 }
-func Elem(name string, props [][2]string, children ...*Node) *Node { // repeat, or, optional, variant nodes
-	var et = elemTyp(name)
+func Attr(name string, value string) *Node {
+	return &Node{
+		typ: attrType,
+		impl: AttrNode{
+			name,
+			value,
+		},
+	}
+}
+func AttrInjection(injname string) *Node {
+	return &Node{
+		typ: attrInjectionType,
+		impl: AttrInjectionNode{
+			injname,
+		},
+	}
+}
+func AttrValueInjection(name string, injname string) *Node {
+	return &Node{
+		typ: attrValueInjectionType,
+		impl: AttrValueInjectionNode{
+			name,
+			injname,
+		},
+	}
+}
+func Elem(name string, attrs []*Node, children []*Node) *Node {
 	return &Node{
 		typ: elementType,
 		impl: &ElementNode{
-			typ:      et,
+			typ:      elemTyp(name),
 			elem:     name,
-			props:    props,
+			attrs:    attrs,
 			children: children,
 		},
 	}
@@ -374,12 +413,36 @@ func (node *Node) writeTo(btc *breakthroughContext) {
 		var sb strings.Builder
 		sb.WriteRune('<')
 		sb.WriteString(unpacked.elem)
-		for _, pair := range unpacked.props {
-			sb.WriteRune(' ')
-			sb.WriteString(pair[0])
-			sb.WriteString("=\"")
-			sb.WriteString(pair[1])
-			sb.WriteRune('"')
+		attrbtc := btc.child("attrs")
+		if len(unpacked.attrs) > 0 {
+			for _, attr := range unpacked.attrs {
+				switch unpackedAttr := attr.impl.(type) {
+				case AttrNode:
+					sb.WriteRune(' ')
+					sb.WriteString(unpackedAttr.name)
+					sb.WriteString("=\"")
+					sb.WriteString(unpackedAttr.value)
+					sb.WriteRune('"')
+					attrbtc.report("ok")
+				case AttrInjectionNode:
+					sb.WriteRune(' ')
+					btc.writeFragment(sb.String())
+					sb.Reset()
+					attrbtc.markInjection(unpackedAttr.injname)
+					attrbtc.report("ok")
+				case AttrValueInjectionNode:
+					sb.WriteRune(' ')
+					sb.WriteString(unpackedAttr.name)
+					sb.WriteString("=\"")
+					btc.writeFragment(sb.String())
+					sb.Reset()
+					attrbtc.markInjection(unpackedAttr.injname)
+					sb.WriteRune('"')
+					attrbtc.report("ok")
+				default:
+					btc.report(fmt.Sprintf("error: wrong attribute type %#v", unpackedAttr))
+				}
+			}
 		}
 		if unpacked.typ == VOID_ELEM_TYPE {
 			sb.WriteString("/>")

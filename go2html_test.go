@@ -89,12 +89,16 @@ var _ = Describe("go2html", func() {
 	Describe("Elem()", func() {
 		Context("when normal elem", func() {
 			It("returns element node", func() {
-				elemNode := Elem("div", [][2]string{
-					[2]string{"id", "myID"},
-					[2]string{"class", "content"},
+				elemNode := Elem("div", []*Node{
+					Attr("id", "myID"),
+					Attr("class", "content"),
 				},
-					Elem("p", [][2]string{}, Text("<span>text</span>")),
-					Injection("text"),
+					[]*Node{
+						Elem("p", []*Node{}, []*Node{
+							Text("<span>text</span>"),
+						}),
+						Injection("text"),
+					},
 				)
 				Expect(elemNode).NotTo(BeNil())
 				t := Tmplt("test", elemNode)
@@ -107,23 +111,33 @@ var _ = Describe("go2html", func() {
 				Expect(chrn1.Messages).To(HaveLen(2))
 				Expect(chrn1.Messages[0]).To(Equal("ok: opening"))
 				Expect(chrn1.Messages[1]).To(Equal("ok: closing"))
-				Expect(chrn1.Children).To(HaveLen(2))
+				Expect(chrn1.Children).To(HaveLen(3))
 				chrn1_1 := chrn1.Children[0]
-				Expect(chrn1_1.Title).To(Equal("<p>"))
+				Expect(chrn1_1.Title).To(Equal("attrs"))
 				Expect(chrn1_1.Messages).To(HaveLen(2))
-				Expect(chrn1_1.Messages[0]).To(Equal("ok: opening"))
-				Expect(chrn1_1.Messages[1]).To(Equal("ok: closing"))
-				Expect(chrn1_1.Children).To(HaveLen(1))
-				chrn1_1_1 := chrn1_1.Children[0]
-				Expect(chrn1_1_1.Title).To(Equal("\"text\""))
-				Expect(chrn1_1_1.Messages).To(HaveLen(1))
-				Expect(chrn1_1_1.Messages[0]).To(Equal("ok"))
-				Expect(chrn1_1_1.Children).To(BeEmpty())
+				Expect(chrn1_1.Messages[0]).To(Equal("ok"))
+				Expect(chrn1_1.Messages[1]).To(Equal("ok"))
+				Expect(chrn1_1.Children).To(BeEmpty())
 				chrn1_2 := chrn1.Children[1]
-				Expect(chrn1_2.Title).To(Equal("{{text}}"))
-				Expect(chrn1_2.Messages).To(HaveLen(1))
-				Expect(chrn1_2.Messages[0]).To(Equal("ok"))
-				Expect(chrn1_2.Children).To(HaveLen(0))
+				Expect(chrn1_2.Title).To(Equal("<p>"))
+				Expect(chrn1_2.Messages).To(HaveLen(2))
+				Expect(chrn1_2.Messages[0]).To(Equal("ok: opening"))
+				Expect(chrn1_2.Messages[1]).To(Equal("ok: closing"))
+				Expect(chrn1_2.Children).To(HaveLen(2))
+				chrn1_2_1 := chrn1_2.Children[0]
+				Expect(chrn1_2_1.Title).To(Equal("attrs"))
+				Expect(chrn1_2_1.Messages).To(BeEmpty())
+				Expect(chrn1_2_1.Children).To(BeEmpty())
+				chrn1_2_2 := chrn1_2.Children[1]
+				Expect(chrn1_2_2.Title).To(Equal("\"text\""))
+				Expect(chrn1_2_2.Messages).To(HaveLen(1))
+				Expect(chrn1_2_2.Messages[0]).To(Equal("ok"))
+				Expect(chrn1_2_2.Children).To(BeEmpty())
+				chrn1_3 := chrn1.Children[2]
+				Expect(chrn1_3.Title).To(Equal("{{text}}"))
+				Expect(chrn1_3.Messages).To(HaveLen(1))
+				Expect(chrn1_3.Messages[0]).To(Equal("ok"))
+				Expect(chrn1_3.Children).To(HaveLen(0))
 				str := t.Populate(map[string]interface{}{
 					"text": "replacement text",
 				})
@@ -133,10 +147,13 @@ var _ = Describe("go2html", func() {
 		Context("when void elem", func() {
 			Context("when has no children", func() {
 				It("returns element node", func() {
-					elemNode := Elem("br", [][2]string{
-						[2]string{"id", "myID"},
-						[2]string{"class", "content"},
-					})
+					elemNode := Elem("br", []*Node{
+						Attr("id", "myID"),
+						Attr("class", "content"),
+						AttrInjection("test-attr"),
+					},
+						[]*Node{},
+					)
 					Expect(elemNode).NotTo(BeNil())
 					t := Tmplt("test", elemNode)
 					rn := t.Precompile()
@@ -147,19 +164,31 @@ var _ = Describe("go2html", func() {
 					Expect(chrn1.Title).To(Equal("<br>"))
 					Expect(chrn1.Messages).To(HaveLen(1))
 					Expect(chrn1.Messages[0]).To(Equal("ok: self-closing"))
-					Expect(chrn1.Children).To(HaveLen(0))
-					str := t.Populate(nil)
-					Expect(str).To(Equal("<br id=\"myID\" class=\"content\"/>"))
+					Expect(chrn1.Children).To(HaveLen(1))
+					chrn1_1 := chrn1.Children[0]
+					Expect(chrn1_1.Title).To(Equal("attrs"))
+					Expect(chrn1_1.Messages).To(HaveLen(3))
+					Expect(chrn1_1.Messages[0]).To(Equal("ok"))
+					Expect(chrn1_1.Messages[1]).To(Equal("ok"))
+					Expect(chrn1_1.Messages[2]).To(Equal("ok"))
+					Expect(chrn1_1.Children).To(BeEmpty())
+					str := t.Populate(map[string]interface{}{
+						"test-attr": "data-test=\"test\"",
+					})
+					Expect(str).To(Equal("<br id=\"myID\" class=\"content\" data-test=\"test\"/>"))
 				})
 			})
 			Context("when has children", func() {
 				It("returns element node without children", func() {
-					elemNode := Elem("br", [][2]string{
-						[2]string{"id", "myID"},
-						[2]string{"class", "content"},
-					},
-						Elem("p", [][2]string{}, Text("<span>text</span>")),
+					elemNode := Elem("br", []*Node{
+						Attr("id", "myID"),
+						AttrValueInjection("class", "test-class"),
+					}, []*Node{
+						Elem("p", []*Node{}, []*Node{
+							Text("<span>text</span>"),
+						}),
 						Injection("text"),
+					},
 					)
 					Expect(elemNode).NotTo(BeNil())
 					t := Tmplt("test", elemNode)
@@ -171,9 +200,17 @@ var _ = Describe("go2html", func() {
 					Expect(chrn1.Title).To(Equal("<br>"))
 					Expect(chrn1.Messages).To(HaveLen(1))
 					Expect(chrn1.Messages[0]).To(Equal("error: void element can't have children (children ignored)"))
-					Expect(chrn1.Children).To(HaveLen(0))
-					str := t.Populate(nil)
-					Expect(str).To(Equal("<br id=\"myID\" class=\"content\"/>"))
+					Expect(chrn1.Children).To(HaveLen(1))
+					chrn1_1 := chrn1.Children[0]
+					Expect(chrn1_1.Title).To(Equal("attrs"))
+					Expect(chrn1_1.Messages).To(HaveLen(2))
+					Expect(chrn1_1.Messages[0]).To(Equal("ok"))
+					Expect(chrn1_1.Messages[1]).To(Equal("ok"))
+					Expect(chrn1_1.Children).To(BeEmpty())
+					str := t.Populate(map[string]interface{}{
+						"test-class": "testClass",
+					})
+					Expect(str).To(Equal("<br id=\"myID\" class=\"testClass\"/>"))
 				})
 			})
 		})
