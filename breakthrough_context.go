@@ -41,6 +41,4 @@ func (btc *BreakthroughContext) MarkInjection(key string) {
 	t.marks = append(t.marks, mark)
 	t.marksMapping[key] = mark
 	t.precompiled = append(t.precompiled, fmt.Sprintf("{{ %s }}", key))
-	t.marks = append(t.marks, mark)
-	t.marksMapping[key] = mark
 }

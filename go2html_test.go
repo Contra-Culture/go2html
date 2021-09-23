@@ -13,7 +13,7 @@ var _ = Describe("go2html", func() {
 			Expect(textNode).NotTo(BeNil())
 			t := Tmplt("test", textNode)
 			rn := t.Precompile()
-			Expect(rn.Title).To(Equal("TEMPLATE(test) ROOT"))
+			Expect(rn.Title).To(Equal("TEMPLATE(test)"))
 			Expect(rn.Messages).To(HaveLen(0))
 			Expect(rn.Children).To(HaveLen(1))
 			chrn := rn.Children[0]
@@ -31,7 +31,7 @@ var _ = Describe("go2html", func() {
 			Expect(textNode).NotTo(BeNil())
 			t := Tmplt("test", textNode)
 			rn := t.Precompile()
-			Expect(rn.Title).To(Equal("TEMPLATE(test) ROOT"))
+			Expect(rn.Title).To(Equal("TEMPLATE(test)"))
 			Expect(rn.Messages).To(HaveLen(0))
 			Expect(rn.Children).To(HaveLen(1))
 			chrn := rn.Children[0]
@@ -49,7 +49,7 @@ var _ = Describe("go2html", func() {
 			Expect(commentNode).NotTo(BeNil())
 			t := Tmplt("test", commentNode)
 			rn := t.Precompile()
-			Expect(rn.Title).To(Equal("TEMPLATE(test) ROOT"))
+			Expect(rn.Title).To(Equal("TEMPLATE(test)"))
 			Expect(rn.Messages).To(HaveLen(0))
 			Expect(rn.Children).To(HaveLen(1))
 			chrn := rn.Children[0]
@@ -72,7 +72,7 @@ var _ = Describe("go2html", func() {
 			}).To(PanicWith("replacement for \"comment\" key is not provied"))
 			t := Tmplt("test", injectionNode)
 			rn := t.Precompile()
-			Expect(rn.Title).To(Equal("TEMPLATE(test) ROOT"))
+			Expect(rn.Title).To(Equal("TEMPLATE(test)"))
 			Expect(rn.Messages).To(HaveLen(0))
 			Expect(rn.Children).To(HaveLen(1))
 			chrn := rn.Children[0]
@@ -103,7 +103,7 @@ var _ = Describe("go2html", func() {
 				Expect(elemNode).NotTo(BeNil())
 				t := Tmplt("test", elemNode)
 				rn := t.Precompile()
-				Expect(rn.Title).To(Equal("TEMPLATE(test) ROOT"))
+				Expect(rn.Title).To(Equal("TEMPLATE(test)"))
 				Expect(rn.Messages).To(HaveLen(0))
 				Expect(rn.Children).To(HaveLen(1))
 				chrn1 := rn.Children[0]
@@ -153,7 +153,7 @@ var _ = Describe("go2html", func() {
 					Expect(elemNode).NotTo(BeNil())
 					t := Tmplt("test", elemNode)
 					rn := t.Precompile()
-					Expect(rn.Title).To(Equal("TEMPLATE(test) ROOT"))
+					Expect(rn.Title).To(Equal("TEMPLATE(test)"))
 					Expect(rn.Messages).To(HaveLen(0))
 					Expect(rn.Children).To(HaveLen(1))
 					chrn1 := rn.Children[0]
@@ -189,7 +189,7 @@ var _ = Describe("go2html", func() {
 					Expect(elemNode).NotTo(BeNil())
 					t := Tmplt("test", elemNode)
 					rn := t.Precompile()
-					Expect(rn.Title).To(Equal("TEMPLATE(test) ROOT"))
+					Expect(rn.Title).To(Equal("TEMPLATE(test)"))
 					Expect(rn.Messages).To(HaveLen(0))
 					Expect(rn.Children).To(HaveLen(1))
 					chrn1 := rn.Children[0]
@@ -207,6 +207,151 @@ var _ = Describe("go2html", func() {
 						"test-class": "testClass",
 					})
 					Expect(str).To(Equal("<br id=\"myID\" class=\"testClass\"/>"))
+				})
+			})
+		})
+	})
+	Describe("Template", func() {
+		Describe(".Node()", func() {
+			Context("when without alias and scope", func() {
+				It("returns template node", func() {
+					t := Tmplt("test", Elem("div", []Node{
+						Attr("id", "myID"),
+						AttrValueInjection("class", "test-class"),
+					}, []Node{
+						Elem("p", []Node{}, []Node{
+							Elem("span", []Node{}, []Node{
+								Injection("nested-template-text"),
+							}),
+						}),
+						Injection("text"),
+					},
+					))
+					tnode := t.Node(NO_ALIAS, NO_INJECTION_SCOPE)
+					elem := Elem("div", []Node{}, []Node{tnode})
+					tmain := Tmplt("test", elem)
+					r := tmain.Precompile()
+					Expect(r.Title).To(Equal("TEMPLATE(test)"))
+					//Expect(r.Messages).To(HaveLen(1))
+					Expect(r.Children).To(HaveLen(1))
+					Expect(r.Children).To(HaveLen(1))
+					ch1 := r.Children[0]
+					Expect(ch1.Title).To(Equal("<div>"))
+					Expect(ch1.Messages).To(HaveLen(2))
+					Expect(ch1.Messages[0]).To(Equal("ok: opening"))
+					Expect(ch1.Messages[1]).To(Equal("ok: closing"))
+					Expect(ch1.Children).To(HaveLen(1))
+					ch1_1 := ch1.Children[0]
+					Expect(ch1_1.Title).To(Equal("TEMPLATE(test)"))
+					Expect(ch1_1.Messages).To(HaveLen(7))
+					Expect(ch1_1.Messages[0]).To(Equal("ok"))
+					Expect(ch1_1.Messages[1]).To(Equal("ok: injection (test-class)"))
+					Expect(ch1_1.Messages[2]).To(Equal("ok"))
+					Expect(ch1_1.Messages[3]).To(Equal("ok: injection (nested-template-text)"))
+					Expect(ch1_1.Messages[4]).To(Equal("ok"))
+					Expect(ch1_1.Messages[5]).To(Equal("ok: injection (text)"))
+					Expect(ch1_1.Messages[6]).To(Equal("ok"))
+					// Expect(ch1_1.Children).To(HaveLen(0))
+					str := tmain.Populate(map[string]interface{}{
+						"nested-template-text": "NESTED TEMPLATE",
+						"test-class":           "testClass",
+						"text":                 "testText",
+					})
+					Expect(str).To(Equal("<div><div id=\"myID\" class=\"testClass\"><p><span>NESTED TEMPLATE</span></p>testText</div></div>"))
+				})
+			})
+			Context("when without alias but with scope", func() {
+				It("returns template node", func() {
+					t := Tmplt("test", Elem("div", []Node{
+						Attr("id", "myID"),
+						AttrValueInjection("class", "test-class"),
+					}, []Node{
+						Elem("p", []Node{}, []Node{
+							Elem("span", []Node{}, []Node{
+								Injection("nested-template-text"),
+							}),
+						}),
+						Injection("text"),
+					},
+					))
+					tnode := t.Node(NO_ALIAS, "test-scope")
+					elem := Elem("div", []Node{}, []Node{tnode})
+					tmain := Tmplt("test", elem)
+					r := tmain.Precompile()
+					Expect(r.Title).To(Equal("TEMPLATE(test)"))
+					//Expect(r.Messages).To(HaveLen(1))
+					Expect(r.Children).To(HaveLen(1))
+					Expect(r.Children).To(HaveLen(1))
+					ch1 := r.Children[0]
+					Expect(ch1.Title).To(Equal("<div>"))
+					Expect(ch1.Messages).To(HaveLen(2))
+					Expect(ch1.Messages[0]).To(Equal("ok: opening"))
+					Expect(ch1.Messages[1]).To(Equal("ok: closing"))
+					Expect(ch1.Children).To(HaveLen(1))
+					ch1_1 := ch1.Children[0]
+					Expect(ch1_1.Title).To(Equal("TEMPLATE(test)"))
+					Expect(ch1_1.Messages).To(HaveLen(7))
+					Expect(ch1_1.Messages[0]).To(Equal("ok"))
+					Expect(ch1_1.Messages[1]).To(Equal("ok: injection (test-scope.test-class)"))
+					Expect(ch1_1.Messages[2]).To(Equal("ok"))
+					Expect(ch1_1.Messages[3]).To(Equal("ok: injection (test-scope.nested-template-text)"))
+					Expect(ch1_1.Messages[4]).To(Equal("ok"))
+					Expect(ch1_1.Messages[5]).To(Equal("ok: injection (test-scope.text)"))
+					Expect(ch1_1.Messages[6]).To(Equal("ok"))
+					// Expect(ch1_1.Children).To(HaveLen(0))
+					str := tmain.Populate(map[string]interface{}{
+						"test-scope.nested-template-text": "NESTED TEMPLATE",
+						"test-scope.test-class":           "testClass",
+						"test-scope.text":                 "testText",
+					})
+					Expect(str).To(Equal("<div><div id=\"myID\" class=\"testClass\"><p><span>NESTED TEMPLATE</span></p>testText</div></div>"))
+				})
+			})
+			Context("when with alias and scope", func() {
+				It("returns template node", func() {
+					t := Tmplt("test", Elem("div", []Node{
+						Attr("id", "myID"),
+						AttrValueInjection("class", "test-class"),
+					}, []Node{
+						Elem("p", []Node{}, []Node{
+							Elem("span", []Node{}, []Node{
+								Injection("nested-template-text"),
+							}),
+						}),
+						Injection("text"),
+					},
+					))
+					tnode := t.Node("some-dir/template", "test-scope")
+					elem := Elem("div", []Node{}, []Node{tnode})
+					tmain := Tmplt("test", elem)
+					r := tmain.Precompile()
+					Expect(r.Title).To(Equal("TEMPLATE(test)"))
+					//Expect(r.Messages).To(HaveLen(1))
+					Expect(r.Children).To(HaveLen(1))
+					Expect(r.Children).To(HaveLen(1))
+					ch1 := r.Children[0]
+					Expect(ch1.Title).To(Equal("<div>"))
+					Expect(ch1.Messages).To(HaveLen(2))
+					Expect(ch1.Messages[0]).To(Equal("ok: opening"))
+					Expect(ch1.Messages[1]).To(Equal("ok: closing"))
+					Expect(ch1.Children).To(HaveLen(1))
+					ch1_1 := ch1.Children[0]
+					Expect(ch1_1.Title).To(Equal("TEMPLATE(some-dir/template)"))
+					Expect(ch1_1.Messages).To(HaveLen(7))
+					Expect(ch1_1.Messages[0]).To(Equal("ok"))
+					Expect(ch1_1.Messages[1]).To(Equal("ok: injection (test-scope.test-class)"))
+					Expect(ch1_1.Messages[2]).To(Equal("ok"))
+					Expect(ch1_1.Messages[3]).To(Equal("ok: injection (test-scope.nested-template-text)"))
+					Expect(ch1_1.Messages[4]).To(Equal("ok"))
+					Expect(ch1_1.Messages[5]).To(Equal("ok: injection (test-scope.text)"))
+					Expect(ch1_1.Messages[6]).To(Equal("ok"))
+					// Expect(ch1_1.Children).To(HaveLen(0))
+					str := tmain.Populate(map[string]interface{}{
+						"test-scope.nested-template-text": "NESTED TEMPLATE",
+						"test-scope.test-class":           "testClass",
+						"test-scope.text":                 "testText",
+					})
+					Expect(str).To(Equal("<div><div id=\"myID\" class=\"testClass\"><p><span>NESTED TEMPLATE</span></p>testText</div></div>"))
 				})
 			})
 		})
