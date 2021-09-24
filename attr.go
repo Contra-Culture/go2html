@@ -9,7 +9,7 @@ type AttrNode struct {
 
 const ATTR_NODE_TITLE = "attr="
 
-func Attr(name string, value string) *AttrNode {
+func Attr(name string, value string) Node {
 	return &AttrNode{
 		name,
 		value,

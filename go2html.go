@@ -29,4 +29,5 @@ func (n *WrongNode) WriteTo(btc *BreakthroughContext) {
 	for _, rr := range n.errors {
 		btc.Report(fmt.Sprintf(WRONG_NODE_ERROR_REPORT_TEMPLATE, rr))
 	}
+	btc.WriteFragment(fmt.Sprintf("<!-- %s -->", n.Title()))
 }

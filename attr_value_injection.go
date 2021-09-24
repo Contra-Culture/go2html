@@ -9,7 +9,7 @@ type AttrValueInjectionNode struct {
 
 const ATTR_VALUE_INJECTION_NODE_TITLE_TEMPLATE = "attr={{%s}}"
 
-func AttrValueInjection(name string, injname string) *AttrValueInjectionNode {
+func AttrValueInjection(name string, injname string) Node {
 	return &AttrValueInjectionNode{
 		name,
 		injname,

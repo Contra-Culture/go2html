@@ -7,19 +7,17 @@ import (
 )
 
 var _ = Describe("go2html", func() {
-	Describe("WrongNode", func() {
-		var n Node
-		BeforeEach(func() {
-			n = Wrong("<p>", []string{"some error"})
-		})
-		Describe("Wrong()", func() {
-			It("returns wrong node", func() {
+	Describe("AttrValueInjectionNode", func() {
+		var n = AttrValueInjection("myAttr", "myAttr")
+
+		Describe("AttrValueInjection()", func() {
+			It("returns attr value injection node", func() {
 				Expect(n).NotTo(BeNil())
 			})
 		})
 		Describe(".Title()", func() {
 			It("returns title", func() {
-				Expect(n.Title()).To(Equal("WRONG(<p>)"))
+				Expect(n.Title()).To(Equal("attr={{myAttr}}"))
 			})
 		})
 		Describe(".WriteTo()", func() {
@@ -30,13 +28,18 @@ var _ = Describe("go2html", func() {
 				Expect(nr.Messages).To(BeEmpty())
 				Expect(nr.Children).To(HaveLen(1))
 				ch := nr.Children[0]
-				Expect(ch.Title).To(Equal("WRONG(<p>)"))
+				Expect(ch.Title).To(Equal("attr={{myAttr}}"))
 				Expect(ch.Messages).To(Equal([]string{
-					"error: some error",
+					"ok",
 				}))
 				Expect(ch.Children).To(BeEmpty())
-				s := t.Populate(map[string]interface{}{})
-				Expect(s).To(Equal("<!-- WRONG(<p>) -->"))
+				Expect(func() {
+					t.Populate(map[string]interface{}{})
+				}).Should(PanicWith("replacement for \"myAttr\" key is not provied"))
+				s := t.Populate(map[string]interface{}{
+					"myAttr": "test value",
+				})
+				Expect(s).To(Equal(" myAttr=\"test value\""))
 			})
 		})
 	})

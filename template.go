@@ -51,8 +51,8 @@ func (t *Template) Precompile() *NodeReport {
 		template:   t,
 		nodeReport: t.report,
 	}
-	for _, node := range t.nodes {
-		node.WriteTo(btc.Child(node.Title()))
+	for _, n := range t.nodes {
+		n.WriteTo(btc.Child(n.Title()))
 	}
 	return t.report
 }

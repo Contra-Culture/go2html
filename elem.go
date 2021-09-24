@@ -242,7 +242,7 @@ func (n *ElementNode) Title() string {
 func (n *ElementNode) WriteTo(btc *BreakthroughContext) {
 	btc.WriteFragment(fmt.Sprintf("<%s", n.elem))
 	if len(n.attrs) > 0 {
-		attrbtc := btc.Child("attrs")
+		attrbtc := btc.Child("[]attrs")
 		for _, attr := range n.attrs {
 			attr.WriteTo(attrbtc)
 		}

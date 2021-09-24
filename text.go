@@ -3,21 +3,29 @@ package go2html
 import "strings"
 
 type TextNode struct {
-	text string
+	title string
+	text  string
 }
 
 var safeTextReplacer = strings.NewReplacer("<", "&lt;", ">", "&gt;", "\"", "&quot", "'", "&quot")
 
 const TEXT_NODE_TITLE = "\"text\""
+const RAW_TEXT_NODE_TITLE = "!\"text\""
 
 func Text(text string) *TextNode {
-	return &TextNode{safeTextReplacer.Replace(text)}
+	return &TextNode{
+		title: TEXT_NODE_TITLE,
+		text:  safeTextReplacer.Replace(text),
+	}
 }
 func RawText(text string) *TextNode {
-	return &TextNode{text}
+	return &TextNode{
+		title: RAW_TEXT_NODE_TITLE,
+		text:  text,
+	}
 }
 func (n *TextNode) Title() string {
-	return TEXT_NODE_TITLE
+	return n.title
 }
 func (n *TextNode) WriteTo(btc *BreakthroughContext) {
 	btc.WriteFragment(n.text)

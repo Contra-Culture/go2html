@@ -7,19 +7,17 @@ import (
 )
 
 var _ = Describe("go2html", func() {
-	Describe("WrongNode", func() {
-		var n Node
-		BeforeEach(func() {
-			n = Wrong("<p>", []string{"some error"})
-		})
-		Describe("Wrong()", func() {
-			It("returns wrong node", func() {
+	Describe("InjectionNode", func() {
+		n := Injection("test")
+
+		Describe("Injection()", func() {
+			It("returns injection node", func() {
 				Expect(n).NotTo(BeNil())
 			})
 		})
 		Describe(".Title()", func() {
 			It("returns title", func() {
-				Expect(n.Title()).To(Equal("WRONG(<p>)"))
+				Expect(n.Title()).To(Equal("{{test}}"))
 			})
 		})
 		Describe(".WriteTo()", func() {
@@ -30,13 +28,18 @@ var _ = Describe("go2html", func() {
 				Expect(nr.Messages).To(BeEmpty())
 				Expect(nr.Children).To(HaveLen(1))
 				ch := nr.Children[0]
-				Expect(ch.Title).To(Equal("WRONG(<p>)"))
+				Expect(ch.Title).To(Equal("{{test}}"))
 				Expect(ch.Messages).To(Equal([]string{
-					"error: some error",
+					"ok",
 				}))
 				Expect(ch.Children).To(BeEmpty())
-				s := t.Populate(map[string]interface{}{})
-				Expect(s).To(Equal("<!-- WRONG(<p>) -->"))
+				Expect(func() {
+					t.Populate(nil)
+				}).To(PanicWith("replacement for \"test\" key is not provied"))
+				s := t.Populate(map[string]interface{}{
+					"test": "testText",
+				})
+				Expect(s).To(Equal("testText"))
 			})
 		})
 	})

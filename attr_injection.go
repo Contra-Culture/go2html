@@ -8,7 +8,7 @@ type AttrInjectionNode struct {
 
 const ATTR_INJECTION_NODE_TITLE_TEMPLATE = "{{%s}}"
 
-func AttrInjection(injname string) *AttrInjectionNode {
+func AttrInjection(injname string) Node {
 	return &AttrInjectionNode{
 		injname,
 	}
