@@ -5,18 +5,23 @@ import "fmt"
 type (
 	Node interface {
 		Title() string
-		WriteTo(btc *BreakthroughContext)
+		Commit(pp *PrecompilingProxy)
+	}
+	PopulatingNode interface {
+		Populate(replacements interface{}) string
+		Scope() (string, bool)
 	}
 	WrongNode struct {
 		originalNode string
 		errors       []string
 	}
+	injectionKey string
 )
 
 const WRONG_NODE_TITLE_TEMPLATE = "WRONG(%s)"
 const WRONG_NODE_ERROR_REPORT_TEMPLATE = "error: %s"
 
-func Wrong(originalNode string, errors []string) Node {
+func Wrong(originalNode string, errors []string) *WrongNode {
 	return &WrongNode{
 		originalNode,
 		errors,
@@ -25,9 +30,9 @@ func Wrong(originalNode string, errors []string) Node {
 func (n *WrongNode) Title() string {
 	return fmt.Sprintf(WRONG_NODE_TITLE_TEMPLATE, n.originalNode)
 }
-func (n *WrongNode) WriteTo(btc *BreakthroughContext) {
+func (n *WrongNode) Commit(pp *PrecompilingProxy) {
 	for _, rr := range n.errors {
-		btc.Report(fmt.Sprintf(WRONG_NODE_ERROR_REPORT_TEMPLATE, rr))
+		pp.Report(fmt.Sprintf(WRONG_NODE_ERROR_REPORT_TEMPLATE, rr))
 	}
-	btc.WriteFragment(fmt.Sprintf("<!-- %s -->", n.Title()))
+	pp.AppendFragment(fmt.Sprintf("<!-- %s -->", n.Title()))
 }

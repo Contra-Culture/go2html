@@ -20,10 +20,10 @@ var _ = Describe("go2html", func() {
 				Expect(n.Title()).To(Equal("{{testAttr}}"))
 			})
 		})
-		Describe(".WriteTo()", func() {
+		Describe(".Commit()", func() {
 			It("writes", func() {
-				t := Tmplt("testTemplate", n)
-				nr := t.Precompile()
+				spec := Spec("testTemplate", n)
+				t, nr := spec.Precompile()
 				Expect(nr.Title).To(Equal("TEMPLATE(testTemplate)"))
 				Expect(nr.Messages).To(BeEmpty())
 				Expect(nr.Children).To(HaveLen(1))

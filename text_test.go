@@ -34,11 +34,11 @@ var _ = Describe("go2html", func() {
 				})
 			})
 		})
-		Describe(".WriteTo()", func() {
+		Describe(".Commit()", func() {
 			Context("when safe text node", func() {
 				It("writes", func() {
-					t := Tmplt("testTemplate", Text("<html>\"text\"</html>"))
-					nr := t.Precompile()
+					spec := Spec("testTemplate", Text("<html>\"text\"</html>"))
+					t, nr := spec.Precompile()
 					Expect(nr.Title).To(Equal("TEMPLATE(testTemplate)"))
 					Expect(nr.Messages).To(BeEmpty())
 					Expect(nr.Children).To(HaveLen(1))
@@ -54,8 +54,8 @@ var _ = Describe("go2html", func() {
 			})
 			Context("when raw text node", func() {
 				It("writes", func() {
-					t := Tmplt("testTemplate", RawText("<html>\"text\"</html>"))
-					nr := t.Precompile()
+					spec := Spec("testTemplate", RawText("<html>\"text\"</html>"))
+					t, nr := spec.Precompile()
 					Expect(nr.Title).To(Equal("TEMPLATE(testTemplate)"))
 					Expect(nr.Messages).To(BeEmpty())
 					Expect(nr.Children).To(HaveLen(1))

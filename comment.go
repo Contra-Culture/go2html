@@ -14,7 +14,7 @@ func Comment(text string) *CommentNode {
 func (n *CommentNode) Title() string {
 	return COMMENT_NODE_TITLE
 }
-func (n *CommentNode) WriteTo(btc *BreakthroughContext) {
-	btc.WriteFragment(fmt.Sprintf("<!-- %s -->", n.text))
-	btc.Report("ok")
+func (n *CommentNode) Commit(pp *PrecompilingProxy) {
+	pp.AppendFragment(fmt.Sprintf("<!-- %s -->", n.text))
+	pp.Report("ok")
 }

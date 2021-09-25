@@ -6,13 +6,13 @@ import (
 )
 
 type (
+	TemplateSpec struct {
+		name  string
+		nodes []Node
+	}
 	Template struct {
-		name         string
-		nodes        []Node
-		marks        []int
-		marksMapping map[string]int
-		precompiled  []string
-		report       *NodeReport
+		name      string
+		fragments []interface{}
 	}
 	NodeReport struct {
 		Title    string
@@ -20,62 +20,71 @@ type (
 		Children []*NodeReport
 	}
 	TemplateNode struct {
-		name     string
-		scope    string
-		template *Template
+		alias     string
+		scope     string
+		fragments []interface{}
 	}
 )
 
-func Tmplt(name string, nodes ...Node) *Template {
-	return &Template{
-		name:         name,
-		nodes:        nodes,
-		marks:        []int{},
-		marksMapping: map[string]int{},
-		precompiled:  []string{},
-		report: &NodeReport{
-			Title:    fmt.Sprintf("TEMPLATE(%s)", name),
+func Spec(name string, nodes ...Node) *TemplateSpec {
+	return &TemplateSpec{
+		name:  name,
+		nodes: nodes,
+	}
+}
+func (t *TemplateSpec) Precompile() (*Template, *NodeReport) {
+	template := &Template{
+		name:      t.name,
+		fragments: []interface{}{},
+	}
+	pp := &PrecompilingProxy{
+		template: template,
+		nodeReport: &NodeReport{
+			Title:    fmt.Sprintf("TEMPLATE(%s)", t.name),
 			Messages: []string{},
 			Children: []*NodeReport{},
 		},
 	}
-}
-func (t *Template) isPrecompiled() bool {
-	return len(t.precompiled) > 0
-}
-func (t *Template) Precompile() *NodeReport {
-	if t.isPrecompiled() {
-		return t.report
-	}
-	btc := &BreakthroughContext{
-		template:   t,
-		nodeReport: t.report,
-	}
 	for _, n := range t.nodes {
-		n.WriteTo(btc.Child(n.Title()))
+		n.Commit(pp.Child(n.Title()))
 	}
-	return t.report
+	return template, pp.nodeReport
 }
 func (t *Template) Populate(replacements map[string]interface{}) string {
-	if !t.isPrecompiled() {
-		panic("template should be precompiled first")
-	}
-	fragments := append([]string{}, t.precompiled...)
-	for key, idx := range t.marksMapping {
-		unknownRepl, ok := replacements[key]
-		if !ok {
-			panic(fmt.Sprintf("replacement for \"%s\" key is not provied", key))
-		}
-		switch repl := unknownRepl.(type) {
+	var result strings.Builder
+	for _, rawFragment := range t.fragments {
+		switch fragment := rawFragment.(type) {
 		case string:
-			fragments[idx] = repl
-		case *Template:
-			fragments[idx] = repl.Populate(replacements)
+			result.WriteString(fragment)
+		case PopulatingNode:
+			reps := replacements
+			key, ok := fragment.Scope()
+			if ok {
+				reps, ok := replacements[key]
+				if !ok {
+					panic(fmt.Sprintf("replacement for \"%s\" key is not provied", key))
+				}
+				result.WriteString(fragment.Populate(reps))
+				continue
+			}
+			result.WriteString(fragment.Populate(reps))
+		case injectionKey:
+			key := string(fragment)
+			rawReplacement, ok := replacements[key]
+			if !ok {
+				panic(fmt.Sprintf("replacement for \"%s\" key is not provied", key))
+			}
+			str, ok := rawReplacement.(string)
+			if !ok {
+				panic("wrong replacement type")
+			}
+			result.WriteString(str)
 		default:
-			panic("wrong replacement type")
+			panic(fmt.Sprintf("wrong fragment type %#v", rawFragment))
+
 		}
 	}
-	return strings.Join(fragments, "")
+	return result.String()
 }
 
 const NO_INJECTION_SCOPE = ""
@@ -83,36 +92,67 @@ const NO_ALIAS = ""
 const INJECTION_SCOPE_TEMPLATE = "%s.%s"
 const TEMPLATE_NODE_TITLE_TEMPLATE = "TEMPLATE(%s)"
 
-func (t *Template) Node(alias, scope string) Node {
-	name := t.name
-	if alias != NO_ALIAS {
-		name = alias
+func (t *Template) Node(alias, scope string) *TemplateNode {
+	if alias == NO_ALIAS {
+		alias = t.name
 	}
-	t.Precompile()
 	return &TemplateNode{
-		name:     name,
-		scope:    scope,
-		template: t,
+		alias:     alias,
+		scope:     scope,
+		fragments: t.fragments,
 	}
 }
 func (n *TemplateNode) Title() string {
-	return fmt.Sprintf(TEMPLATE_NODE_TITLE_TEMPLATE, n.name)
+	return fmt.Sprintf(TEMPLATE_NODE_TITLE_TEMPLATE, n.alias)
 }
-func (n *TemplateNode) WriteTo(btc *BreakthroughContext) {
-outer:
-	for i, p := range n.template.precompiled {
-		for _, mi := range n.template.marks {
-			if mi == i {
-				key := p[3 : len(p)-3]
-				if n.scope != NO_INJECTION_SCOPE {
-					key = fmt.Sprintf(INJECTION_SCOPE_TEMPLATE, n.scope, key)
-				}
-				btc.MarkInjection(key)
-				btc.Report(fmt.Sprintf("ok: injection (%s)", key))
-				continue outer
-			}
-		}
-		btc.WriteFragment(p)
-		btc.Report("ok")
+func (n *TemplateNode) Commit(pp *PrecompilingProxy) {
+	pp.AppendFragment(n)
+	pp.Report("ok")
+}
+func (n *TemplateNode) Populate(rawReplacements interface{}) string {
+	replacements, ok := rawReplacements.(map[string]interface{})
+	if !ok {
+		panic("replacements should be of type map[string]interface{}")
 	}
+	var (
+		result  strings.Builder
+		rawReps interface{}
+	)
+	for _, rawFragment := range n.fragments {
+		switch fragment := rawFragment.(type) {
+		case string:
+			result.WriteString(fragment)
+		case PopulatingNode:
+			reps := replacements
+			key, ok := fragment.Scope()
+			if ok {
+				rawReps, ok = replacements[key]
+				if !ok {
+					panic(fmt.Sprintf("replacement for \"%s\" key is not provied", key))
+				}
+				reps, ok = rawReps.(map[string]interface{})
+				if !ok {
+					panic("wrong replacement type")
+				}
+			}
+			result.WriteString(fragment.Populate(reps))
+		case injectionKey:
+			key := string(fragment)
+			rawReplacement, ok := replacements[key]
+			if !ok {
+				panic(fmt.Sprintf("replacement for \"%s\" key is not provied", key))
+			}
+			str, ok := rawReplacement.(string)
+			if !ok {
+				panic("wrong replacement type")
+			}
+			result.WriteString(str)
+		default:
+			panic(fmt.Sprintf("wrong fragment type %#v", rawFragment))
+		}
+	}
+	return result.String()
+}
+func (n *TemplateNode) Scope() (string, bool) {
+	return n.scope, n.scope != NO_INJECTION_SCOPE
 }

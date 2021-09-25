@@ -239,28 +239,28 @@ func elemTyp(name string) elemType {
 func (n *ElementNode) Title() string {
 	return fmt.Sprintf(ELEMENT_NODE_TITLE_TEMPLATE, n.elem)
 }
-func (n *ElementNode) WriteTo(btc *BreakthroughContext) {
-	btc.WriteFragment(fmt.Sprintf("<%s", n.elem))
+func (n *ElementNode) Commit(pp *PrecompilingProxy) {
+	pp.AppendFragment(fmt.Sprintf("<%s", n.elem))
 	if len(n.attrs) > 0 {
-		attrbtc := btc.Child("[]attrs")
+		attrpp := pp.Child("[]attrs")
 		for _, attr := range n.attrs {
-			attr.WriteTo(attrbtc)
+			attr.Commit(attrpp)
 		}
 	}
 	if n.typ == VOID_ELEM_TYPE {
-		btc.WriteFragment("/>")
+		pp.AppendFragment("/>")
 		if len(n.children) != 0 {
-			btc.Report("error: void element can't have children (children ignored)")
+			pp.Report("error: void element can't have children (children ignored)")
 			return
 		}
-		btc.Report("ok: self-closing")
+		pp.Report("ok: self-closing")
 		return
 	}
-	btc.WriteFragment(">")
-	btc.Report("ok: opening")
+	pp.AppendFragment(">")
+	pp.Report("ok: opening")
 	for _, child := range n.children {
-		child.WriteTo(btc.Child(child.Title()))
+		child.Commit(pp.Child(child.Title()))
 	}
-	btc.WriteFragment(fmt.Sprintf("</%s>", n.elem))
-	btc.Report("ok: closing")
+	pp.AppendFragment(fmt.Sprintf("</%s>", n.elem))
+	pp.Report("ok: closing")
 }

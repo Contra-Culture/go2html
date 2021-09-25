@@ -9,7 +9,7 @@ type AttrNode struct {
 
 const ATTR_NODE_TITLE = "attr="
 
-func Attr(name string, value string) Node {
+func Attr(name string, value string) *AttrNode {
 	return &AttrNode{
 		name,
 		value,
@@ -18,7 +18,7 @@ func Attr(name string, value string) Node {
 func (n *AttrNode) Title() string {
 	return ATTR_NODE_TITLE
 }
-func (n *AttrNode) WriteTo(btc *BreakthroughContext) {
-	btc.WriteFragment(fmt.Sprintf(" %s=\"%s\"", n.name, n.value))
-	btc.Report("ok")
+func (n *AttrNode) Commit(pp *PrecompilingProxy) {
+	pp.AppendFragment(fmt.Sprintf(" %s=\"%s\"", n.name, n.value))
+	pp.Report("ok")
 }

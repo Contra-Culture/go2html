@@ -23,12 +23,12 @@ var _ = Describe("go2html", func() {
 
 			})
 		})
-		Describe(".WriteTo()", func() {
+		Describe(".Commit()", func() {
 			Context("when normal element", func() {
 				Context("when no attributes and children", func() {
 					It("writes", func() {
-						t := Tmplt("testTemplate", Elem("div", []Node{}, []Node{}))
-						rn := t.Precompile()
+						spec := Spec("testTemplate", Elem("div", []Node{}, []Node{}))
+						t, rn := spec.Precompile()
 						Expect(rn.Title).To(Equal("TEMPLATE(testTemplate)"))
 						Expect(rn.Messages).To(BeEmpty())
 						Expect(rn.Children).To(HaveLen(1))
@@ -45,7 +45,7 @@ var _ = Describe("go2html", func() {
 				})
 				Context("when with attributes", func() {
 					It("writes", func() {
-						t := Tmplt("testTemplate", Elem("div",
+						spec := Spec("testTemplate", Elem("div",
 							[]Node{
 								Attr("test1", "value1"),
 								AttrInjection("injattr"),
@@ -53,7 +53,7 @@ var _ = Describe("go2html", func() {
 							},
 							[]Node{},
 						))
-						rn := t.Precompile()
+						t, rn := spec.Precompile()
 						Expect(rn.Title).To(Equal("TEMPLATE(testTemplate)"))
 						Expect(rn.Messages).To(BeEmpty())
 						Expect(rn.Children).To(HaveLen(1))
@@ -89,7 +89,7 @@ var _ = Describe("go2html", func() {
 				})
 				Context("when with attributes and children", func() {
 					It("writes", func() {
-						t := Tmplt("testTemplate",
+						spec := Spec("testTemplate",
 							Elem("div",
 								[]Node{
 									Attr("class", "my-class"),
@@ -103,7 +103,7 @@ var _ = Describe("go2html", func() {
 								},
 							),
 						)
-						rn := t.Precompile()
+						t, rn := spec.Precompile()
 						Expect(rn.Title).To(Equal("TEMPLATE(testTemplate)"))
 						Expect(rn.Messages).To(BeEmpty())
 						Expect(rn.Children).To(HaveLen(1))
@@ -140,7 +140,7 @@ var _ = Describe("go2html", func() {
 				Context("when void element", func() {
 					Context("when has no children", func() {
 						It("writes", func() {
-							t := Tmplt("testTemplate",
+							spec := Spec("testTemplate",
 								Elem("br", []Node{
 									Attr("id", "myID"),
 									Attr("class", "content"),
@@ -148,7 +148,7 @@ var _ = Describe("go2html", func() {
 								},
 									[]Node{},
 								))
-							rn := t.Precompile()
+							t, rn := spec.Precompile()
 							Expect(rn.Title).To(Equal("TEMPLATE(testTemplate)"))
 							Expect(rn.Messages).To(BeEmpty())
 							Expect(rn.Children).To(HaveLen(1))
@@ -177,7 +177,7 @@ var _ = Describe("go2html", func() {
 					})
 					Context("when has children", func() {
 						It("fails", func() {
-							t := Tmplt("testTemplate",
+							spec := Spec("testTemplate",
 								Elem("br", []Node{
 									Attr("id", "myID"),
 									AttrValueInjection("class", "test-class"),
@@ -189,7 +189,7 @@ var _ = Describe("go2html", func() {
 								},
 								),
 							)
-							rn := t.Precompile()
+							t, rn := spec.Precompile()
 							Expect(rn.Title).To(Equal("TEMPLATE(testTemplate)"))
 							Expect(rn.Messages).To(HaveLen(0))
 							Expect(rn.Children).To(HaveLen(1))

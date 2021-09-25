@@ -27,7 +27,7 @@ func RawText(text string) *TextNode {
 func (n *TextNode) Title() string {
 	return n.title
 }
-func (n *TextNode) WriteTo(btc *BreakthroughContext) {
-	btc.WriteFragment(n.text)
-	btc.Report("ok")
+func (n *TextNode) Commit(pp *PrecompilingProxy) {
+	pp.AppendFragment(n.text)
+	pp.Report("ok")
 }

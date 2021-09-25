@@ -3,21 +3,21 @@ package go2html
 import "fmt"
 
 type AttrInjectionNode struct {
-	injname string
+	key injectionKey
 }
 
 const ATTR_INJECTION_NODE_TITLE_TEMPLATE = "{{%s}}"
 
-func AttrInjection(injname string) Node {
+func AttrInjection(key string) *AttrInjectionNode {
 	return &AttrInjectionNode{
-		injname,
+		injectionKey(key),
 	}
 }
 func (n *AttrInjectionNode) Title() string {
-	return fmt.Sprintf(ATTR_INJECTION_NODE_TITLE_TEMPLATE, n.injname)
+	return fmt.Sprintf(ATTR_INJECTION_NODE_TITLE_TEMPLATE, n.key)
 }
-func (n *AttrInjectionNode) WriteTo(btc *BreakthroughContext) {
-	btc.WriteFragment(" ")
-	btc.MarkInjection(n.injname)
-	btc.Report("ok")
+func (n *AttrInjectionNode) Commit(pp *PrecompilingProxy) {
+	pp.AppendFragment(" ")
+	pp.AppendFragment(n.key)
+	pp.Report("ok")
 }

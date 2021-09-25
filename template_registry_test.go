@@ -18,13 +18,13 @@ var _ = Describe("template registry", func() {
 			Context("when does not exist", func() {
 				It("returns dir", func() {
 					r := Reg("test")
-					dir, err := r.Mkdir("1")
+					_, err := r.Mkdir("1")
 					Expect(err).To(BeNil())
-					dir, err = r.Mkdir("1", "1-1")
+					_, err = r.Mkdir("1", "1-1")
 					Expect(err).NotTo(HaveOccurred())
-					dir, err = r.Mkdir("2", "2-1", "2-1-1")
+					_, err = r.Mkdir("2", "2-1", "2-1-1")
 					Expect(err).NotTo(HaveOccurred())
-					dir, err = r.Mkdir("2", "2-1", "2-1-2")
+					dir, err := r.Mkdir("2", "2-1", "2-1-2")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dir).NotTo(BeNil())
 				})
@@ -32,25 +32,25 @@ var _ = Describe("template registry", func() {
 			Context("when exists", func() {
 				It("fails and returns error", func() {
 					r := Reg("test")
-					dir, err := r.Mkdir("1")
+					_, err := r.Mkdir("1")
 					Expect(err).To(BeNil())
-					dir, err = r.Mkdir("1")
+					dir, err := r.Mkdir("1")
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal("directory \"1\" already exists"))
 					Expect(dir).To(BeNil())
-					dir, err = r.Mkdir("1", "1-1")
+					_, err = r.Mkdir("1", "1-1")
 					Expect(err).NotTo(HaveOccurred())
 					dir, err = r.Mkdir("1", "1-1")
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal("directory \"1-1\" already exists"))
 					Expect(dir).To(BeNil())
-					dir, err = r.Mkdir("2", "2-1", "2-1-1")
+					_, err = r.Mkdir("2", "2-1", "2-1-1")
 					Expect(err).To(BeNil())
 					dir, err = r.Mkdir("2", "2-1", "2-1-1")
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal("directory \"2-1-1\" already exists"))
 					Expect(dir).To(BeNil())
-					dir, err = r.Mkdir("2", "2-1", "2-1-2")
+					_, err = r.Mkdir("2", "2-1", "2-1-2")
 					Expect(err).To(BeNil())
 					dir, err = r.Mkdir("2", "2-1", "2-1-2")
 					Expect(err).To(HaveOccurred())
@@ -148,7 +148,7 @@ var _ = Describe("template registry", func() {
 					reg.Mkdir("some")
 					reg.Mkdir("some", "path")
 					reg.Mkdir("some", "path", "here")
-					err := reg.Add(Tmplt("test",
+					spec := Spec("test",
 						Elem("div",
 							[]Node{
 								Attr("id", "myID"),
@@ -161,18 +161,18 @@ var _ = Describe("template registry", func() {
 									}),
 								}),
 								Injection("text"),
-							})),
-						"some", "path", "here", "testTemplate",
-					)
+							}))
+					t, _ := spec.Precompile()
+					err := reg.Add(t, "some", "path", "here", "testTemplate")
 					Expect(err).NotTo(HaveOccurred())
 					elem := Elem("div", []Node{}, []Node{reg.TemplateNode("some", "path", "here", "testTemplate")})
-					tmain := Tmplt("test", elem)
-					r := tmain.Precompile()
-					Expect(r.Title).To(Equal("TEMPLATE(test)"))
-					Expect(r.Messages).To(BeEmpty())
-					Expect(r.Children).To(HaveLen(1))
-					Expect(r.Children).To(HaveLen(1))
-					ch1 := r.Children[0]
+					spec = Spec("test", elem)
+					t, nr := spec.Precompile()
+					Expect(nr.Title).To(Equal("TEMPLATE(test)"))
+					Expect(nr.Messages).To(BeEmpty())
+					Expect(nr.Children).To(HaveLen(1))
+					Expect(nr.Children).To(HaveLen(1))
+					ch1 := nr.Children[0]
 					Expect(ch1.Title).To(Equal("<div>"))
 					Expect(ch1.Messages).To(Equal([]string{
 						"ok: opening",
@@ -183,18 +183,14 @@ var _ = Describe("template registry", func() {
 					Expect(ch1_1.Title).To(Equal("TEMPLATE(some/path/here/testTemplate)"))
 					Expect(ch1_1.Messages).To(Equal([]string{
 						"ok",
-						"ok: injection (test.test-class)",
-						"ok",
-						"ok: injection (test.nested-template-text)",
-						"ok",
-						"ok: injection (test.text)",
-						"ok",
 					}))
 					Expect(ch1_1.Children).To(BeEmpty())
-					str := tmain.Populate(map[string]interface{}{
-						"test.nested-template-text": "NESTED TEMPLATE",
-						"test.test-class":           "testClass",
-						"test.text":                 "testText",
+					str := t.Populate(map[string]interface{}{
+						"test": map[string]interface{}{
+							"nested-template-text": "NESTED TEMPLATE",
+							"test-class":           "testClass",
+							"text":                 "testText",
+						},
 					})
 					Expect(str).To(Equal("<div><div id=\"myID\" class=\"testClass\"><p><span>NESTED TEMPLATE</span></p>testText</div></div>"))
 				})
@@ -224,15 +220,15 @@ var _ = Describe("template registry", func() {
 						r := Reg("test")
 						dir1, err := r.Mkdir("1")
 						Expect(err).To(BeNil())
-						dir1_1, err := dir1.Mkdir("1-1")
+						_, err = dir1.Mkdir("1-1")
 						Expect(err).NotTo(HaveOccurred())
-						dir1_1, err = dir1.Mkdir("1-1")
+						dir1_1, err := dir1.Mkdir("1-1")
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(Equal("directory \"1-1\" already exists"))
 						Expect(dir1_1).To(BeNil())
-						dir1_2, err := dir1.Mkdir("1-2")
+						_, err = dir1.Mkdir("1-2")
 						Expect(err).To(BeNil())
-						dir1_2, err = dir1.Mkdir("1-2")
+						dir1_2, err := dir1.Mkdir("1-2")
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(Equal("directory \"1-2\" already exists"))
 						Expect(dir1_2).To(BeNil())
