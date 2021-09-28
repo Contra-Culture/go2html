@@ -103,17 +103,7 @@ func (r *TemplateRegistry) Get(path ...string) (t *Template, err error) {
 	}
 	return
 }
-func (r *TemplateRegistry) TemplateNode(path ...string) Node {
-	t, err := r.Get(path...)
-	if err != nil {
-		return &WrongNode{
-			originalNode: fmt.Sprintf(TEMPLATE_NODE_TITLE_TEMPLATE, path[len(path)-1]),
-			errors:       []string{err.Error()},
-		}
-	}
-	alias := strings.Join(path, "/")
-	return t.Node(alias, t.name)
-}
+
 func (d *TemplateRegistryDir) Mkdir(path ...string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
@@ -207,15 +197,4 @@ func (d *TemplateRegistryDir) Get(path ...string) (t *Template, err error) {
 		return nil, fmt.Errorf("template \"%s\" does not exist", strings.Join(path, "/"))
 	}
 	return
-}
-func (d *TemplateRegistryDir) TemplateNode(path ...string) Node {
-	t, err := d.Get(path...)
-	if err != nil {
-		return &WrongNode{
-			originalNode: fmt.Sprintf(TEMPLATE_NODE_TITLE_TEMPLATE, path[len(path)-1]),
-			errors:       []string{err.Error()},
-		}
-	}
-	alias := strings.Join(path, "/")
-	return t.Node(alias, t.name)
 }

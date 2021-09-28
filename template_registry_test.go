@@ -141,64 +141,6 @@ var _ = Describe("template registry", func() {
 				})
 			})
 		})
-		Describe(".TemplateNode()", func() {
-			Context("when template exists", func() {
-				It("returns template node", func() {
-					reg := Reg("testReg")
-					reg.Mkdir("some")
-					reg.Mkdir("some", "path")
-					reg.Mkdir("some", "path", "here")
-					spec := Spec("test",
-						Elem("div",
-							[]Node{
-								Attr("id", "myID"),
-								AttrValueInjection("class", "test-class"),
-							},
-							[]Node{
-								Elem("p", []Node{}, []Node{
-									Elem("span", []Node{}, []Node{
-										Injection("nested-template-text"),
-									}),
-								}),
-								Injection("text"),
-							}))
-					t, _ := spec.Precompile()
-					err := reg.Add(t, "some", "path", "here", "testTemplate")
-					Expect(err).NotTo(HaveOccurred())
-					elem := Elem("div", []Node{}, []Node{reg.TemplateNode("some", "path", "here", "testTemplate")})
-					spec = Spec("test", elem)
-					t, nr := spec.Precompile()
-					Expect(nr.Title).To(Equal("TEMPLATE(test)"))
-					Expect(nr.Messages).To(BeEmpty())
-					Expect(nr.Children).To(HaveLen(1))
-					Expect(nr.Children).To(HaveLen(1))
-					ch1 := nr.Children[0]
-					Expect(ch1.Title).To(Equal("<div>"))
-					Expect(ch1.Messages).To(Equal([]string{
-						"ok: opening",
-						"ok: closing",
-					}))
-					Expect(ch1.Children).To(HaveLen(1))
-					ch1_1 := ch1.Children[0]
-					Expect(ch1_1.Title).To(Equal("TEMPLATE(some/path/here/testTemplate)"))
-					Expect(ch1_1.Messages).To(Equal([]string{
-						"ok",
-					}))
-					Expect(ch1_1.Children).To(BeEmpty())
-					str := t.Populate(map[string]interface{}{
-						"test": map[string]interface{}{
-							"nested-template-text": "NESTED TEMPLATE",
-							"test-class":           "testClass",
-							"text":                 "testText",
-						},
-					})
-					Expect(str).To(Equal("<div><div id=\"myID\" class=\"testClass\"><p><span>NESTED TEMPLATE</span></p>testText</div></div>"))
-				})
-			})
-			Context("when template does not exist", func() {
-
-			})
-		})
 		Describe("TemplateRegistryDir", func() {
 			Describe(".Mkdir()", func() {
 				Context("when does not exist", func() {
