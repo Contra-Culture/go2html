@@ -10,39 +10,75 @@ type (
 	}
 )
 
-func (tcp *TemplateConfiguringProxy) templateConfiguringProxy() *TemplateConfiguringProxy {
-	return &TemplateConfiguringProxy{
-		template: tcp.template,
-	}
-}
-func (tcp *TemplateConfiguringProxy) elemConfiguringProxy() *ElemConfiguringProxy {
-	return &ElemConfiguringProxy{
-		tcp,
-	}
-}
-func (tcp *TemplateConfiguringProxy) appendFragment(fragment interface{}) {
+func (tcp *TemplateConfiguringProxy) appendFragment(rawNewFragment interface{}) FragmentPosition {
 	t := tcp.template
-	t.fragments = append(t.fragments, fragment)
+	newFragment, ok := rawNewFragment.(string)
+	if !ok {
+		t.fragments = append(t.fragments, rawNewFragment)
+		return FragmentPosition{
+			FragmentIndex: len(t.fragments) - 1,
+			RangeBegin:    0,
+			RangeEnd:      0,
+		}
+	}
+	lastFragmentIdx := len(t.fragments) - 1
+	if len(t.fragments) == 0 {
+		t.fragments = append(t.fragments, rawNewFragment)
+		return FragmentPosition{
+			FragmentIndex: 0,
+			RangeBegin:    0,
+			RangeEnd:      len(newFragment) - 1,
+		}
+	}
+	rawLastFragment := t.fragments[lastFragmentIdx]
+	lastFragment, ok := rawLastFragment.(string)
+	if !ok {
+		t.fragments = append(t.fragments, rawNewFragment)
+		return FragmentPosition{
+			FragmentIndex: len(t.fragments) - 1,
+			RangeBegin:    0,
+			RangeEnd:      0,
+		}
+	}
+	t.fragments[lastFragmentIdx] = lastFragment + newFragment
+	return FragmentPosition{
+		FragmentIndex: len(t.fragments) - 1,
+		RangeBegin:    len(lastFragment),
+		RangeEnd:      len(lastFragment) + len(newFragment) - 1,
+	}
 }
 func (tcp *TemplateConfiguringProxy) Elem(
 	name string,
-	elemConfig func(*ElemConfiguringProxy),
-	nestedNodesConfig func(*NestedNodesConfiguringProxy),
+	configureSelf func(*ElemConfiguringProxy),
+	configureNested func(*NestedNodesConfiguringProxy),
 ) {
-	tcp.appendFragment(fmt.Sprintf("<%s", name))
-	elemConfig(&ElemConfiguringProxy{
-		tcp: tcp,
+
+	posBegin := tcp.appendFragment(fmt.Sprintf("<%s", name))
+	node := &Node{
+		PosBegin:                 posBegin,
+		Kind:                     ELEM_NODE_KIND,
+		Title:                    name,
+		Attributes:               map[string]string{},
+		AttributeInjections:      map[string]injection{},
+		AttributeValueInjections: map[string]injection{},
+		Children:                 []*Node{},
+	}
+	tcp.template.nodes = append(tcp.template.nodes, node)
+	configureSelf(&ElemConfiguringProxy{
+		tcp:  tcp,
+		node: node,
 	})
 	typ := elemTyp(name)
 	if typ == VOID_ELEM_TYPE {
-		tcp.appendFragment("/>")
+		node.PosEnd = tcp.appendFragment("/>")
 		return
 	}
 	tcp.appendFragment(">")
-	nestedNodesConfig(&NestedNodesConfiguringProxy{
-		tcp: tcp,
+	configureNested(&NestedNodesConfiguringProxy{
+		tcp:    tcp,
+		parent: node,
 	})
-	tcp.appendFragment(fmt.Sprintf("</%s>", name))
+	node.PosEnd = tcp.appendFragment(fmt.Sprintf("</%s>", name))
 }
 func (tcp *TemplateConfiguringProxy) Template(key string, t *Template) {
 	if len(key) == 0 {
@@ -54,33 +90,82 @@ func (tcp *TemplateConfiguringProxy) Template(key string, t *Template) {
 	})
 }
 func (tcp *TemplateConfiguringProxy) Comment(text string) {
-	tcp.appendFragment(fmt.Sprintf("<!-- %s -->", text))
+	pos := tcp.appendFragment(fmt.Sprintf("<!-- %s -->", text))
+	node := &Node{
+		PosBegin: pos,
+		PosEnd:   pos,
+		Kind:     COMMENT_NODE_KIND,
+		Title:    COMMENT_NODE_TITLE,
+	}
+	tcp.template.nodes = append(tcp.template.nodes, node)
 }
 func (tcp *TemplateConfiguringProxy) Doctype() {
-	tcp.appendFragment("<!DOCTYPE html>")
+	pos := tcp.appendFragment("<!DOCTYPE html>")
+	node := &Node{
+		PosBegin: pos,
+		PosEnd:   pos,
+		Kind:     DOCTYPE_NODE_KIND,
+		Title:    DOCTYPE_NODE_TITLE,
+	}
+	tcp.template.nodes = append(tcp.template.nodes, node)
 }
 func (tcp *TemplateConfiguringProxy) TextInjection(key string) {
-	tcp.appendFragment(injection{
+	pos := tcp.appendFragment(injection{
 		key: key,
 		modifiers: []func(string) string{
 			HTMLEscape,
 		},
 	})
+	node := &Node{
+		PosBegin: pos,
+		PosEnd:   pos,
+		Kind:     TEXT_INJECTION_NODE_KIND,
+		Title:    key,
+	}
+	tcp.template.nodes = append(tcp.template.nodes, node)
 }
-func (tcp *TemplateConfiguringProxy) RawTextInjection(key string) {
-	tcp.appendFragment(injection{
+func (tcp *TemplateConfiguringProxy) UnsafeTextInjection(key string) {
+	pos := tcp.appendFragment(injection{
 		key: key,
 	})
+	node := &Node{
+		PosBegin: pos,
+		PosEnd:   pos,
+		Kind:     TEXT_INJECTION_NODE_KIND,
+		Title:    key,
+	}
+	tcp.template.nodes = append(tcp.template.nodes, node)
 }
 func (tcp *TemplateConfiguringProxy) Text(text string) {
-	tcp.appendFragment(safeTextReplacer.Replace(text))
+	pos := tcp.appendFragment(safeTextReplacer.Replace(text))
+	node := &Node{
+		PosBegin: pos,
+		PosEnd:   pos,
+		Kind:     TEXT_NODE_KIND,
+		Title:    TEXT_NODE_TITLE,
+	}
+	tcp.template.nodes = append(tcp.template.nodes, node)
 }
-func (tcp *TemplateConfiguringProxy) RawText(text string) {
-	tcp.appendFragment(text)
+func (tcp *TemplateConfiguringProxy) UnsafeText(text string) {
+	pos := tcp.appendFragment(text)
+	node := &Node{
+		PosBegin: pos,
+		PosEnd:   pos,
+		Kind:     TEXT_NODE_KIND,
+		Title:    TEXT_NODE_TITLE,
+	}
+	tcp.template.nodes = append(tcp.template.nodes, node)
 }
 func (tcp *TemplateConfiguringProxy) Repeat(key string, t *Template) {
-	tcp.appendFragment(repetition{
+	pos := tcp.appendFragment(repetition{
 		key:      key,
 		template: t,
 	})
+	node := &Node{
+		PosBegin: pos,
+		PosEnd:   pos,
+		Kind:     REPEAT_NODE_KIND,
+		Title:    key,
+	}
+	tcp.template.nodes = append(tcp.template.nodes, node)
 }

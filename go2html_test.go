@@ -8,9 +8,9 @@ import (
 
 var _ = Describe("go2html", func() {
 	Describe("Template", func() {
-		Describe("Tmplt()", func() {
+		Describe("NewTemplate()", func() {
 			It("returns template", func() {
-				t := Tmplt("test", func(t *TemplateConfiguringProxy) {
+				t := NewTemplate("test", func(t *TemplateConfiguringProxy) {
 					t.Comment("comment text")
 				})
 				Expect(t).NotTo(BeNil())
@@ -19,12 +19,12 @@ var _ = Describe("go2html", func() {
 		Describe(".Populate()", func() {
 			Context("when all replacements provided", func() {
 				It("returns string", func() {
-					t := Tmplt("test", func(t *TemplateConfiguringProxy) {
+					t := NewTemplate("test", func(t *TemplateConfiguringProxy) {
 						t.Comment("comment text")
 					})
 					Expect(t.Populate(map[string]interface{}{})).To(Equal("<!-- comment text -->"))
 
-					t = Tmplt("test", func(t *TemplateConfiguringProxy) {
+					t = NewTemplate("test", func(t *TemplateConfiguringProxy) {
 						t.Doctype()
 						t.Comment("comment text")
 						t.Text("Some text here.")
@@ -35,7 +35,7 @@ var _ = Describe("go2html", func() {
 								e.Attr("class", "paragraph")
 							},
 							func(n *NestedNodesConfiguringProxy) {
-								n.RawTextInjection("paragraph1")
+								n.UnsafeTextInjection("paragraph1")
 							})
 						t.Elem(
 							"div",
@@ -62,7 +62,7 @@ var _ = Describe("go2html", func() {
 									})
 								n.Template(
 									"",
-									Tmplt(
+									NewTemplate(
 										"nestedTemplate1",
 										func(t *TemplateConfiguringProxy) {
 											t.Elem(
@@ -82,7 +82,7 @@ var _ = Describe("go2html", func() {
 										}))
 								n.Repeat(
 									"paragraphs",
-									Tmplt(
+									NewTemplate(
 										"nestedTemplate1",
 										func(t *TemplateConfiguringProxy) {
 											t.Elem(

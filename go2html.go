@@ -1,10 +1,13 @@
 package go2html
 
-import "strings"
+import (
+	"strings"
+)
 
 type (
 	Template struct {
 		key       string
+		nodes     []*Node
 		fragments []interface{}
 	}
 	elemType  int
@@ -15,6 +18,11 @@ type (
 	repetition struct {
 		key      string
 		template *Template
+	}
+	FragmentPosition struct {
+		FragmentIndex int
+		RangeBegin    int
+		RangeEnd      int
 	}
 )
 
@@ -30,15 +38,18 @@ const (
 
 var safeTextReplacer = strings.NewReplacer("<", "&lt;", ">", "&gt;", "\"", "&quot", "'", "&quot")
 
-func Tmplt(key string, config func(*TemplateConfiguringProxy)) *Template {
+func NewTemplate(key string, configure func(*TemplateConfiguringProxy)) *Template {
 	t := &Template{
 		key:       key,
 		fragments: []interface{}{},
 	}
-	config(&TemplateConfiguringProxy{
+	configure(&TemplateConfiguringProxy{
 		template: t,
 	})
 	return t
+}
+func (t *Template) Nodes() []*Node {
+	return t.nodes
 }
 func (t *Template) Populate(rawReplacements map[string]interface{}) string {
 	var sb strings.Builder
