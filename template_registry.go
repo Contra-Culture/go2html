@@ -65,7 +65,7 @@ func (r *TemplateRegistry) Dir(path ...string) (*TemplateRegistryDir, error) {
 	if len(path) == 1 {
 		return dir, nil
 	}
-	dir, err := dir.Dir(path[1:]...)
+	dir, err := dir.Mkdir(path[1:]...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (r *TemplateRegistry) Add(t *Template, path ...string) (err error) {
 		return fmt.Errorf("wrong path \"%s\", should have at least two chunks", strings.Join(path, "/"))
 	}
 	prevIdx := len(path) - 1
-	dir, err := r.Dir(path[:prevIdx]...)
+	dir, err := r.Mkdir(path[:prevIdx]...)
 	if err != nil {
 		return
 	}
@@ -145,7 +145,7 @@ func (d *TemplateRegistryDir) Dir(path ...string) (*TemplateRegistryDir, error) 
 	if len(path) == 1 {
 		return dir, nil
 	}
-	dir, err := dir.Dir(path[1:]...)
+	dir, err := dir.Mkdir(path[1:]...)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (d *TemplateRegistryDir) Add(t *Template, path ...string) (err error) {
 		return
 	}
 	prevIdx := len(path) - 1
-	dir, err := d.Dir(path[:prevIdx]...)
+	dir, err := d.Mkdir(path[:prevIdx]...)
 	if err != nil {
 		return
 	}
