@@ -24,7 +24,7 @@ func Reg(name string) *TemplateRegistry {
 		dirs: map[string]*TemplateRegistryDir{},
 	}
 }
-func (r *TemplateRegistry) Mkdir(path ...string) (*TemplateRegistryDir, error) {
+func (r *TemplateRegistry) Mkdir(path []string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -48,9 +48,9 @@ func (r *TemplateRegistry) Mkdir(path ...string) (*TemplateRegistryDir, error) {
 	if len(path) == 1 {
 		return dir, nil
 	}
-	return dir.Mkdir(path[1:]...)
+	return dir.Mkdir(path[1:])
 }
-func (r *TemplateRegistry) Dir(path ...string) (*TemplateRegistryDir, error) {
+func (r *TemplateRegistry) Dir(path []string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -65,18 +65,18 @@ func (r *TemplateRegistry) Dir(path ...string) (*TemplateRegistryDir, error) {
 	if len(path) == 1 {
 		return dir, nil
 	}
-	dir, err := dir.Mkdir(path[1:]...)
+	dir, err := dir.Mkdir(path[1:])
 	if err != nil {
 		return nil, err
 	}
 	return dir, nil
 }
-func (r *TemplateRegistry) Add(t *Template, path ...string) (err error) {
+func (r *TemplateRegistry) Add(t *Template, path []string) (err error) {
 	if len(path) < 2 {
 		return fmt.Errorf("wrong path \"%s\", should have at least two chunks", strings.Join(path, "/"))
 	}
 	prevIdx := len(path) - 1
-	dir, err := r.Mkdir(path[:prevIdx]...)
+	dir, err := r.Mkdir(path[:prevIdx])
 	if err != nil {
 		return
 	}
@@ -87,13 +87,13 @@ func (r *TemplateRegistry) Add(t *Template, path ...string) (err error) {
 	dir.content[path[prevIdx]] = t
 	return
 }
-func (r *TemplateRegistry) Get(path ...string) (t *Template, err error) {
+func (r *TemplateRegistry) Get(path []string) (t *Template, err error) {
 	if len(path) < 2 {
 		return nil, fmt.Errorf("wrong path \"%s\", should have at least two chunks", strings.Join(path, "/"))
 	}
 	templateKey := path[len(path)-1]
 	dirPath := path[:len(path)-1]
-	d, err := r.Dir(dirPath...)
+	d, err := r.Dir(dirPath)
 	if err != nil {
 		return
 	}
@@ -104,7 +104,7 @@ func (r *TemplateRegistry) Get(path ...string) (t *Template, err error) {
 	return
 }
 
-func (d *TemplateRegistryDir) Mkdir(path ...string) (*TemplateRegistryDir, error) {
+func (d *TemplateRegistryDir) Mkdir(path []string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -128,9 +128,9 @@ func (d *TemplateRegistryDir) Mkdir(path ...string) (*TemplateRegistryDir, error
 	if len(path) == 1 {
 		return dir, nil
 	}
-	return dir.Mkdir(path[1:]...)
+	return dir.Mkdir(path[1:])
 }
-func (d *TemplateRegistryDir) Dir(path ...string) (*TemplateRegistryDir, error) {
+func (d *TemplateRegistryDir) Dir(path []string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -145,13 +145,13 @@ func (d *TemplateRegistryDir) Dir(path ...string) (*TemplateRegistryDir, error) 
 	if len(path) == 1 {
 		return dir, nil
 	}
-	dir, err := dir.Mkdir(path[1:]...)
+	dir, err := dir.Mkdir(path[1:])
 	if err != nil {
 		return nil, err
 	}
 	return dir, nil
 }
-func (d *TemplateRegistryDir) Add(t *Template, path ...string) (err error) {
+func (d *TemplateRegistryDir) Add(t *Template, path []string) (err error) {
 	if len(path) < 1 {
 		return errors.New("wrong path, should have at least one chunk")
 	}
@@ -164,7 +164,7 @@ func (d *TemplateRegistryDir) Add(t *Template, path ...string) (err error) {
 		return
 	}
 	prevIdx := len(path) - 1
-	dir, err := d.Mkdir(path[:prevIdx]...)
+	dir, err := d.Mkdir(path[:prevIdx])
 	if err != nil {
 		return
 	}
@@ -175,7 +175,7 @@ func (d *TemplateRegistryDir) Add(t *Template, path ...string) (err error) {
 	dir.content[path[prevIdx]] = t
 	return
 }
-func (d *TemplateRegistryDir) Get(path ...string) (t *Template, err error) {
+func (d *TemplateRegistryDir) Get(path []string) (t *Template, err error) {
 	if len(path) < 1 {
 		return nil, fmt.Errorf("wrong path \"%s\", should have at least one chunk", strings.Join(path, "/"))
 	}
@@ -188,7 +188,7 @@ func (d *TemplateRegistryDir) Get(path ...string) (t *Template, err error) {
 	}
 	templateKey := path[len(path)-1]
 	dirPath := path[:len(path)-1]
-	dir, err := d.Dir(dirPath...)
+	dir, err := d.Dir(dirPath)
 	if err != nil {
 		return
 	}
