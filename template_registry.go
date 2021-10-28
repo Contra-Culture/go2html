@@ -47,7 +47,21 @@ func (r *TemplateRegistry) Mkdir(path []string) (*TemplateRegistryDir, error) {
 	return dir.Mkdir(path[1:])
 }
 func (r *TemplateRegistry) Dir(path []string) (*TemplateRegistryDir, error) {
-	return r.Mkdir(path)
+	if len(path) < 1 {
+		return nil, errors.New("wrong path, should not be empty")
+	}
+	chunk := path[0]
+	if len(chunk) < 1 {
+		return nil, errors.New("wrong path, path chunk should not be empty")
+	}
+	dir, exists := r.dirs[chunk]
+	if !exists {
+		return nil, fmt.Errorf("wrong path, dir \"%s\" is not found", chunk)
+	}
+	if len(path) == 1 {
+		return dir, nil
+	}
+	return dir.Dir(path[1:])
 }
 func (r *TemplateRegistry) Add(t *Template, path []string) (err error) {
 	if len(path) < 2 {
@@ -92,7 +106,7 @@ func (d *TemplateRegistryDir) Mkdir(path []string) (*TemplateRegistryDir, error)
 	}
 	_, exists := d.content[chunk]
 	if exists {
-		return nil, errors.New("wrong path, there is already a template with such name")
+		return nil, fmt.Errorf("naming conflict with \"%s\" path: there is already a template with \"%s\" name", strings.Join(path, "/"), path[len(path) - 1])
 	}
 	dir, exists := d.children[chunk]
 	if !exists {
@@ -109,7 +123,21 @@ func (d *TemplateRegistryDir) Mkdir(path []string) (*TemplateRegistryDir, error)
 	return dir.Mkdir(path[1:])
 }
 func (d *TemplateRegistryDir) Dir(path []string) (*TemplateRegistryDir, error) {
-	return d.Mkdir(path)
+	if len(path) < 1 {
+		return nil, errors.New("wrong path, should not be empty")
+	}
+	chunk := path[0]
+	if len(chunk) < 1 {
+		return nil, errors.New("wrong path, path chunk should not be empty")
+	}
+	dir, exists := d.children[chunk]
+	if !exists {
+		return nil, fmt.Errorf("wrong path, dir \"%s\" is not found", chunk)
+	}
+	if len(path) == 1 {
+		return dir, nil
+	}
+	return dir.Dir(path[1:])
 }
 func (d *TemplateRegistryDir) Add(t *Template, path []string) (err error) {
 	if len(path) < 1 {
