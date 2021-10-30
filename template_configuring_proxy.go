@@ -55,13 +55,10 @@ func (tcp *TemplateConfiguringProxy) Elem(
 
 	posBegin := tcp.appendFragment(fmt.Sprintf("<%s", name))
 	node := &Node{
-		PosBegin:                 posBegin,
-		Kind:                     ELEM_NODE_KIND,
-		Title:                    name,
-		Attributes:               map[string]string{},
-		AttributeInjections:      map[string]injection{},
-		AttributeValueInjections: map[string]injection{},
-		Children:                 []*Node{},
+		PosBegin: posBegin,
+		Kind:     ELEM_NODE_KIND,
+		Title:    name,
+		Children: []*Node{},
 	}
 	tcp.template.nodes = append(tcp.template.nodes, node)
 	configureSelf(&ElemConfiguringProxy{

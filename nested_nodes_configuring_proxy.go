@@ -16,13 +16,10 @@ func (nncp *NestedNodesConfiguringProxy) Elem(
 ) {
 	posBegin := nncp.tcp.appendFragment(fmt.Sprintf("<%s", name))
 	node := &Node{
-		PosBegin:                 posBegin,
-		Kind:                     ELEM_NODE_KIND,
-		Title:                    name,
-		Attributes:               map[string]string{},
-		AttributeInjections:      map[string]injection{},
-		AttributeValueInjections: map[string]injection{},
-		Children:                 []*Node{},
+		PosBegin: posBegin,
+		Kind:     ELEM_NODE_KIND,
+		Title:    name,
+		Children: []*Node{},
 	}
 	nncp.parent.Children = append(nncp.parent.Children, node)
 	configureSelf(&ElemConfiguringProxy{
