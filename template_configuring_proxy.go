@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Contra-Culture/go2html/fragments"
+	"github.com/Contra-Culture/go2html/node"
 )
 
 type (
@@ -18,11 +19,7 @@ func (tcp *TemplateConfiguringProxy) Elem(
 	configureSelf func(*ElemConfiguringProxy),
 	configureNested func(*NestedNodesConfiguringProxy),
 ) {
-	node := &Node{
-		Kind:     ELEM_NODE_KIND,
-		Title:    name,
-		Children: []*Node{},
-	}
+	node := node.New(node.ELEM_NODE_KIND, []string{name})
 	tcp.template.nodes = append(tcp.template.nodes, node)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append(fmt.Sprintf("<%s", name))
@@ -51,11 +48,10 @@ func (tcp *TemplateConfiguringProxy) Template(key string, t *Template) {
 	if len(key) == 0 {
 		key = t.key
 	}
-	node := &Node{
-		Kind:  TEMPLATE_NODE_KIND,
-		Title: key,
-	}
-	tcp.template.nodes = append(tcp.template.nodes, node)
+	tcp.template.nodes = append(
+		tcp.template.nodes,
+		node.New(node.TEMPLATE_NODE_KIND, []string{key}),
+	)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append(
 			&Template{
@@ -68,10 +64,8 @@ func (tcp *TemplateConfiguringProxy) Template(key string, t *Template) {
 func (tcp *TemplateConfiguringProxy) Comment(text string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
-		&Node{
-			Kind:  COMMENT_NODE_KIND,
-			Title: COMMENT_NODE_TITLE,
-		})
+		node.New(node.COMMENT_NODE_KIND, []string{}),
+	)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append(fmt.Sprintf("<!-- %s -->", text))
 	})
@@ -79,10 +73,8 @@ func (tcp *TemplateConfiguringProxy) Comment(text string) {
 func (tcp *TemplateConfiguringProxy) Doctype() {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
-		&Node{
-			Kind:  DOCTYPE_NODE_KIND,
-			Title: DOCTYPE_NODE_TITLE,
-		})
+		node.New(node.DOCTYPE_NODE_KIND, []string{}),
+	)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append("<!DOCTYPE html>")
 	})
@@ -90,10 +82,8 @@ func (tcp *TemplateConfiguringProxy) Doctype() {
 func (tcp *TemplateConfiguringProxy) TextInjection(key string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
-		&Node{
-			Kind:  TEXT_INJECTION_NODE_KIND,
-			Title: key,
-		})
+		node.New(node.TEXT_INJECTION_NODE_KIND, []string{key}),
+	)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append(
 			injection{
@@ -107,10 +97,8 @@ func (tcp *TemplateConfiguringProxy) TextInjection(key string) {
 func (tcp *TemplateConfiguringProxy) UnsafeTextInjection(key string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
-		&Node{
-			Kind:  TEXT_INJECTION_NODE_KIND,
-			Title: key,
-		})
+		node.New(node.UNSAFE_TEXT_INJECTION_NODE_KIND, []string{key}),
+	)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append(
 			injection{
@@ -121,10 +109,8 @@ func (tcp *TemplateConfiguringProxy) UnsafeTextInjection(key string) {
 func (tcp *TemplateConfiguringProxy) Text(text string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
-		&Node{
-			Kind:  TEXT_NODE_KIND,
-			Title: TEXT_NODE_TITLE,
-		})
+		node.New(node.TEXT_NODE_KIND, []string{}),
+	)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append(safeTextReplacer.Replace(text))
 	})
@@ -132,10 +118,8 @@ func (tcp *TemplateConfiguringProxy) Text(text string) {
 func (tcp *TemplateConfiguringProxy) UnsafeText(text string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
-		&Node{
-			Kind:  TEXT_NODE_KIND,
-			Title: TEXT_NODE_TITLE,
-		})
+		node.New(node.UNSAFE_TEXT_NODE_KIND, []string{}),
+	)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append(text)
 	})
@@ -143,10 +127,8 @@ func (tcp *TemplateConfiguringProxy) UnsafeText(text string) {
 func (tcp *TemplateConfiguringProxy) Repeat(key string, t *Template) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
-		&Node{
-			Kind:  REPEAT_NODE_KIND,
-			Title: key,
-		})
+		node.New(node.REPEAT_NODE_KIND, []string{key}),
+	)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append(
 			repetition{

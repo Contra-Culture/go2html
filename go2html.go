@@ -4,12 +4,16 @@ import (
 	"strings"
 
 	"github.com/Contra-Culture/go2html/fragments"
+	"github.com/Contra-Culture/go2html/node"
 )
 
 type (
+	Constructor struct {
+		nodes []*node.Node
+	}
 	Template struct {
 		key       string
-		nodes     []*Node
+		nodes     []*node.Node
 		fragments *fragments.Fragments
 	}
 	elemType  int
@@ -39,7 +43,7 @@ func NewTemplate(key string, configure func(*TemplateConfiguringProxy)) *Templat
 	fs := []interface{}{}
 	t := &Template{
 		key:       key,
-		nodes:     []*Node{},
+		nodes:     []*node.Node{},
 		fragments: fragments.New(fs),
 	}
 	configure(&TemplateConfiguringProxy{
@@ -47,7 +51,7 @@ func NewTemplate(key string, configure func(*TemplateConfiguringProxy)) *Templat
 	})
 	return t
 }
-func (t *Template) Nodes() []*Node {
+func (t *Template) Nodes() []*node.Node {
 	return t.nodes
 }
 func (t *Template) Fragments() []interface{} {
