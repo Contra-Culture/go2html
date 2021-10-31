@@ -1,53 +1,63 @@
 package go2html
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Contra-Culture/go2html/fragments"
+)
 
 type (
 	ElemConfiguringProxy struct {
-		tcp  *TemplateConfiguringProxy
-		node *Node
+		tcp     *TemplateConfiguringProxy
+		node    *Node
+		context *fragments.Context
 	}
 )
 
 func (ecp *ElemConfiguringProxy) AttrInjection(key string) {
-	posBegin := ecp.tcp.appendFragment(" ")
 	fragment := injection{
 		key: key,
 	}
-	posEnd := ecp.tcp.appendFragment(fragment)
+	ecp.context.InContext(
+		func(c *fragments.Context) {
+			c.Append(" ")
+			c.Append(fragment)
+		})
 	ecp.node.Children = append(
 		ecp.node.Children,
 		&Node{
-			PosBegin: posBegin,
-			PosEnd:   posEnd,
-			Kind:     ATTRIBUTE_INJECTION_NODE_KIND,
-			Title:    key,
+			Kind:  ATTRIBUTE_INJECTION_NODE_KIND,
+			Title: key,
 		},
 	)
 }
 func (ecp *ElemConfiguringProxy) AttrValueInjection(name string, key string) {
-	posBegin := ecp.tcp.appendFragment(fmt.Sprintf(" %s=\"", name))
 	fragment := injection{
 		key: key,
 	}
-	ecp.tcp.appendFragment(fragment)
-	posEnd := ecp.tcp.appendFragment("\"")
+	ecp.context.InContext(
+		func(c *fragments.Context) {
+			c.Append(fmt.Sprintf(" %s=\"", name))
+			c.Append(fragment)
+			c.Append("\"")
+		})
 	ecp.node.Children = append(
 		ecp.node.Children,
 		&Node{
-			PosBegin: posBegin,
-			PosEnd:   posEnd,
-			Kind:     ATTRIBUTE_VALUE_INJECTION_NODE_KIND,
-			Title:    key,
+			Kind:  ATTRIBUTE_VALUE_INJECTION_NODE_KIND,
+			Title: key,
 		},
 	)
 }
 func (ecp *ElemConfiguringProxy) Attr(name string, value string) {
-	pos := ecp.tcp.appendFragment(fmt.Sprintf(" %s=\"%s\"", name, value))
-	ecp.node.Children = append(ecp.node.Children, &Node{
-		PosBegin: pos,
-		PosEnd:   pos,
-		Kind:     ATTRIBUTE_NODE_KIND,
-		Title:    name,
-	})
+	ecp.context.InContext(
+		func(c *fragments.Context) {
+			c.Append(fmt.Sprintf(" %s=\"%s\"", name, value))
+		})
+	ecp.node.Children = append(
+		ecp.node.Children,
+		&Node{
+			Kind:  ATTRIBUTE_NODE_KIND,
+			Title: name,
+		})
 }

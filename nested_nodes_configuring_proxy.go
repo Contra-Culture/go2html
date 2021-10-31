@@ -1,11 +1,16 @@
 package go2html
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Contra-Culture/go2html/fragments"
+)
 
 type (
 	NestedNodesConfiguringProxy struct {
-		tcp    *TemplateConfiguringProxy
-		parent *Node
+		tcp     *TemplateConfiguringProxy
+		parent  *Node
+		context *fragments.Context
 	}
 )
 
@@ -14,124 +19,149 @@ func (nncp *NestedNodesConfiguringProxy) Elem(
 	configureSelf func(*ElemConfiguringProxy),
 	configureNested func(*NestedNodesConfiguringProxy),
 ) {
-	posBegin := nncp.tcp.appendFragment(fmt.Sprintf("<%s", name))
 	node := &Node{
-		PosBegin: posBegin,
 		Kind:     ELEM_NODE_KIND,
 		Title:    name,
 		Children: []*Node{},
 	}
 	nncp.parent.Children = append(nncp.parent.Children, node)
-	configureSelf(&ElemConfiguringProxy{
-		tcp:  nncp.tcp,
-		node: node,
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(fmt.Sprintf("<%s", name))
+		configureSelf(
+			&ElemConfiguringProxy{
+				tcp:     nncp.tcp,
+				node:    node,
+				context: c,
+			})
+		typ := elemTyp(name)
+		if typ == VOID_ELEM_TYPE {
+			c.Append("/>")
+			return
+		}
+		c.Append(">")
+		configureNested(
+			&NestedNodesConfiguringProxy{
+				tcp:     nncp.tcp,
+				parent:  node,
+				context: c,
+			})
+		c.Append(fmt.Sprintf("</%s>", name))
 	})
-	typ := elemTyp(name)
-	if typ == VOID_ELEM_TYPE {
-		node.PosEnd = nncp.tcp.appendFragment("/>")
-		return
-	}
-	nncp.tcp.appendFragment(">")
-	configureNested(&NestedNodesConfiguringProxy{
-		tcp:    nncp.tcp,
-		parent: node,
-	})
-	node.PosEnd = nncp.tcp.appendFragment(fmt.Sprintf("</%s>", name))
 }
 func (nncp *NestedNodesConfiguringProxy) Template(key string, t *Template) {
 	if len(key) == 0 {
 		key = t.key
 	}
-	pos := nncp.tcp.appendFragment(&Template{
-		key:       key,
-		nodes:     t.nodes,
-		fragments: t.fragments,
+	nncp.parent.Children = append(
+		nncp.parent.Children,
+		&Node{
+			Kind:  TEMPLATE_NODE_KIND,
+			Title: key,
+		},
+	)
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(
+			&Template{
+				key:       key,
+				nodes:     t.nodes,
+				fragments: t.fragments,
+			})
 	})
-	node := &Node{
-		PosBegin: pos,
-		PosEnd:   pos,
-		Kind:     TEMPLATE_NODE_KIND,
-		Title:    key,
-	}
-	nncp.parent.Children = append(nncp.parent.Children, node)
 }
 func (nncp *NestedNodesConfiguringProxy) Comment(text string) {
-	pos := nncp.tcp.appendFragment(fmt.Sprintf("<!-- %s -->", text))
-	node := &Node{
-		PosBegin: pos,
-		PosEnd:   pos,
-		Kind:     COMMENT_NODE_KIND,
-		Title:    COMMENT_NODE_TITLE,
-	}
-	nncp.parent.Children = append(nncp.parent.Children, node)
+	nncp.parent.Children = append(
+		nncp.parent.Children,
+		&Node{
+			Kind:  COMMENT_NODE_KIND,
+			Title: COMMENT_NODE_TITLE,
+		},
+	)
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(fmt.Sprintf("<!-- %s -->", text))
+	})
 }
 func (nncp *NestedNodesConfiguringProxy) Doctype() {
-	pos := nncp.tcp.appendFragment("<!DOCTYPE html>")
-	node := &Node{
-		PosBegin: pos,
-		PosEnd:   pos,
-		Kind:     DOCTYPE_NODE_KIND,
-		Title:    DOCTYPE_NODE_TITLE,
-	}
-	nncp.parent.Children = append(nncp.parent.Children, node)
+	nncp.parent.Children = append(
+		nncp.parent.Children,
+		&Node{
+			Kind:  DOCTYPE_NODE_KIND,
+			Title: DOCTYPE_NODE_TITLE,
+		},
+	)
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append("<!DOCTYPE html>")
+	})
 }
 func (nncp *NestedNodesConfiguringProxy) TextInjection(key string) {
-	pos := nncp.tcp.appendFragment(injection{
-		key: key,
-		modifiers: []func(string) string{
-			HTMLEscape,
+	nncp.parent.Children = append(
+		nncp.parent.Children,
+		&Node{
+			Kind:  TEXT_INJECTION_NODE_KIND,
+			Title: key,
 		},
+	)
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(
+			injection{
+				key: key,
+				modifiers: []func(string) string{
+					HTMLEscape,
+				},
+			})
 	})
-	node := &Node{
-		PosBegin: pos,
-		PosEnd:   pos,
-		Kind:     TEXT_INJECTION_NODE_KIND,
-		Title:    key,
-	}
-	nncp.parent.Children = append(nncp.parent.Children, node)
 }
 func (nncp *NestedNodesConfiguringProxy) UnsafeTextInjection(key string) {
-	pos := nncp.tcp.appendFragment(injection{
-		key: key,
+	nncp.parent.Children = append(
+		nncp.parent.Children,
+		&Node{
+			Kind:  TEXT_INJECTION_NODE_KIND,
+			Title: key,
+		},
+	)
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(
+			injection{
+				key: key,
+			})
 	})
-	node := &Node{
-		PosBegin: pos,
-		PosEnd:   pos,
-		Kind:     TEXT_INJECTION_NODE_KIND,
-		Title:    key,
-	}
-	nncp.parent.Children = append(nncp.parent.Children, node)
 }
 func (nncp *NestedNodesConfiguringProxy) Text(text string) {
-	pos := nncp.tcp.appendFragment(safeTextReplacer.Replace(text))
-	node := &Node{
-		PosBegin: pos,
-		PosEnd:   pos,
-		Kind:     TEXT_NODE_KIND,
-		Title:    TEXT_NODE_TITLE,
-	}
-	nncp.parent.Children = append(nncp.parent.Children, node)
+	nncp.parent.Children = append(
+		nncp.parent.Children,
+		&Node{
+			Kind:  TEXT_NODE_KIND,
+			Title: TEXT_NODE_TITLE,
+		},
+	)
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(safeTextReplacer.Replace(text))
+	})
 }
 func (nncp *NestedNodesConfiguringProxy) UnsafeText(text string) {
-	pos := nncp.tcp.appendFragment(text)
-	node := &Node{
-		PosBegin: pos,
-		PosEnd:   pos,
-		Kind:     TEXT_NODE_KIND,
-		Title:    TEXT_NODE_TITLE,
-	}
-	nncp.parent.Children = append(nncp.parent.Children, node)
+	nncp.parent.Children = append(
+		nncp.parent.Children,
+		&Node{
+			Kind:  TEXT_NODE_KIND,
+			Title: TEXT_NODE_TITLE,
+		},
+	)
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(text)
+	})
 }
 func (nncp *NestedNodesConfiguringProxy) Repeat(key string, t *Template) {
-	pos := nncp.tcp.appendFragment(repetition{
-		key:      key,
-		template: t,
+	nncp.parent.Children = append(
+		nncp.parent.Children,
+		&Node{
+			Kind:  REPEAT_NODE_KIND,
+			Title: key,
+		},
+	)
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(
+			repetition{
+				key:      key,
+				template: t,
+			})
 	})
-	node := &Node{
-		PosBegin: pos,
-		PosEnd:   pos,
-		Kind:     REPEAT_NODE_KIND,
-		Title:    key,
-	}
-	nncp.parent.Children = append(nncp.parent.Children, node)
 }

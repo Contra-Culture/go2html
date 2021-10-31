@@ -23,7 +23,6 @@ var _ = Describe("go2html", func() {
 						t.Comment("comment text")
 					})
 					Expect(t.Populate(map[string]interface{}{})).To(Equal("<!-- comment text -->"))
-
 					t = NewTemplate("test", func(t *TemplateConfiguringProxy) {
 						t.Doctype()
 						t.Comment("comment text")
@@ -118,7 +117,8 @@ var _ = Describe("go2html", func() {
 								},
 							},
 						),
-					).To(Equal("<!DOCTYPE html><!-- comment text -->Some text here.Inserted text here.<p class=\"paragraph\">Inserted <b>paragraph1</b> text.</p><div title=\"Some title\" data-ok=\"1\" data-confirm=\"1\"><h1 class=\"div-header\">Header1<span>Some text here.</span></h1><h2 class=\"subheader\"></h2><p>Second &lt;i&gt;paragraph&lt;/i&gt;.</p><p class=\"repeatable-paragraph\">Injected paragraph text 1.</p><p class=\"repeatable-paragraph\">Injected paragraph text 2.</p><p class=\"repeatable-paragraph\">Injected paragraph text 3.</p></div>"))
+					).To(Equal(
+						"<!DOCTYPE html><!-- comment text -->Some text here.Inserted text here.<p class=\"paragraph\">Inserted <b>paragraph1</b> text.</p><div title=\"Some title\" data-ok=\"1\" data-confirm=\"1\"><h1 class=\"div-header\">Header1<span>Some text here.</span></h1><h2 class=\"subheader\"></h2><p>Second &lt;i&gt;paragraph&lt;/i&gt;.</p><p class=\"repeatable-paragraph\">Injected paragraph text 1.</p><p class=\"repeatable-paragraph\">Injected paragraph text 2.</p><p class=\"repeatable-paragraph\">Injected paragraph text 3.</p></div>"))
 				})
 			})
 		})

@@ -2,13 +2,15 @@ package go2html
 
 import (
 	"strings"
+
+	"github.com/Contra-Culture/go2html/fragments"
 )
 
 type (
 	Template struct {
 		key       string
 		nodes     []*Node
-		fragments []interface{}
+		fragments *fragments.Fragments
 	}
 	elemType  int
 	injection struct {
@@ -18,11 +20,6 @@ type (
 	repetition struct {
 		key      string
 		template *Template
-	}
-	FragmentPosition struct {
-		FragmentIndex int
-		RangeBegin    int
-		RangeEnd      int
 	}
 )
 
@@ -39,9 +36,11 @@ const (
 var safeTextReplacer = strings.NewReplacer("<", "&lt;", ">", "&gt;", "\"", "&quot", "'", "&quot")
 
 func NewTemplate(key string, configure func(*TemplateConfiguringProxy)) *Template {
+	fs := []interface{}{}
 	t := &Template{
 		key:       key,
-		fragments: []interface{}{},
+		nodes:     []*Node{},
+		fragments: fragments.New(fs),
 	}
 	configure(&TemplateConfiguringProxy{
 		template: t,
@@ -51,9 +50,12 @@ func NewTemplate(key string, configure func(*TemplateConfiguringProxy)) *Templat
 func (t *Template) Nodes() []*Node {
 	return t.nodes
 }
+func (t *Template) Fragments() []interface{} {
+	return t.fragments.Fragments()
+}
 func (t *Template) Populate(rawReplacements map[string]interface{}) string {
 	var sb strings.Builder
-	for _, rawFragment := range t.fragments {
+	for _, rawFragment := range t.fragments.Fragments() {
 		switch fragment := rawFragment.(type) {
 		case string:
 			sb.WriteString(fragment)

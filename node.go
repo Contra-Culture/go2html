@@ -2,8 +2,6 @@ package go2html
 
 type (
 	Node struct {
-		PosBegin FragmentPosition
-		PosEnd   FragmentPosition
 		Kind     string
 		Title    string
 		Children []*Node
@@ -32,16 +30,4 @@ const (
 
 func (n *Node) AddChild(child *Node) {
 	n.Children = append(n.Children, child)
-}
-func (n *Node) Position() [2][2]int {
-	return [2][2]int{
-		{
-			n.PosBegin.FragmentIndex,
-			n.PosBegin.RangeBegin,
-		},
-		{
-			n.PosEnd.FragmentIndex,
-			n.PosEnd.RangeEnd,
-		},
-	}
 }
