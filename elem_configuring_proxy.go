@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	"github.com/Contra-Culture/go2html/fragments"
+	"github.com/Contra-Culture/go2html/node"
 )
 
 type (
 	ElemConfiguringProxy struct {
 		tcp     *TemplateConfiguringProxy
-		node    *Node
+		node    *node.Node
 		context *fragments.Context
 	}
 )
@@ -23,13 +24,7 @@ func (ecp *ElemConfiguringProxy) AttrInjection(key string) {
 			c.Append(" ")
 			c.Append(fragment)
 		})
-	ecp.node.Children = append(
-		ecp.node.Children,
-		&Node{
-			Kind:  ATTRIBUTE_INJECTION_NODE_KIND,
-			Title: key,
-		},
-	)
+	ecp.node.AddChild(node.ATTRIBUTE_INJECTION_NODE_KIND, []string{key})
 }
 func (ecp *ElemConfiguringProxy) AttrValueInjection(name string, key string) {
 	fragment := injection{
@@ -41,23 +36,12 @@ func (ecp *ElemConfiguringProxy) AttrValueInjection(name string, key string) {
 			c.Append(fragment)
 			c.Append("\"")
 		})
-	ecp.node.Children = append(
-		ecp.node.Children,
-		&Node{
-			Kind:  ATTRIBUTE_VALUE_INJECTION_NODE_KIND,
-			Title: key,
-		},
-	)
+	ecp.node.AddChild(node.ATTRIBUTE_VALUE_INJECTION_NODE_KIND, []string{name, key})
 }
 func (ecp *ElemConfiguringProxy) Attr(name string, value string) {
 	ecp.context.InContext(
 		func(c *fragments.Context) {
 			c.Append(fmt.Sprintf(" %s=\"%s\"", name, value))
 		})
-	ecp.node.Children = append(
-		ecp.node.Children,
-		&Node{
-			Kind:  ATTRIBUTE_NODE_KIND,
-			Title: name,
-		})
+	ecp.node.AddChild(node.ATTRIBUTE_NODE_KIND, []string{name})
 }

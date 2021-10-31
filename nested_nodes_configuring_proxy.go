@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	"github.com/Contra-Culture/go2html/fragments"
+	"github.com/Contra-Culture/go2html/node"
 )
 
 type (
 	NestedNodesConfiguringProxy struct {
 		tcp     *TemplateConfiguringProxy
-		parent  *Node
+		parent  *node.Node
 		context *fragments.Context
 	}
 )
@@ -19,12 +20,7 @@ func (nncp *NestedNodesConfiguringProxy) Elem(
 	configureSelf func(*ElemConfiguringProxy),
 	configureNested func(*NestedNodesConfiguringProxy),
 ) {
-	node := &Node{
-		Kind:     ELEM_NODE_KIND,
-		Title:    name,
-		Children: []*Node{},
-	}
-	nncp.parent.Children = append(nncp.parent.Children, node)
+	node := nncp.parent.AddChild(node.ELEM_NODE_KIND, []string{name})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(fmt.Sprintf("<%s", name))
 		configureSelf(
@@ -52,13 +48,7 @@ func (nncp *NestedNodesConfiguringProxy) Template(key string, t *Template) {
 	if len(key) == 0 {
 		key = t.key
 	}
-	nncp.parent.Children = append(
-		nncp.parent.Children,
-		&Node{
-			Kind:  TEMPLATE_NODE_KIND,
-			Title: key,
-		},
-	)
+	nncp.parent.AddChild(node.TEMPLATE_NODE_KIND, []string{key})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(
 			&Template{
@@ -69,37 +59,19 @@ func (nncp *NestedNodesConfiguringProxy) Template(key string, t *Template) {
 	})
 }
 func (nncp *NestedNodesConfiguringProxy) Comment(text string) {
-	nncp.parent.Children = append(
-		nncp.parent.Children,
-		&Node{
-			Kind:  COMMENT_NODE_KIND,
-			Title: COMMENT_NODE_TITLE,
-		},
-	)
+	nncp.parent.AddChild(node.COMMENT_NODE_KIND, []string{})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(fmt.Sprintf("<!-- %s -->", text))
 	})
 }
 func (nncp *NestedNodesConfiguringProxy) Doctype() {
-	nncp.parent.Children = append(
-		nncp.parent.Children,
-		&Node{
-			Kind:  DOCTYPE_NODE_KIND,
-			Title: DOCTYPE_NODE_TITLE,
-		},
-	)
+	nncp.parent.AddChild(node.DOCTYPE_NODE_KIND, []string{})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append("<!DOCTYPE html>")
 	})
 }
 func (nncp *NestedNodesConfiguringProxy) TextInjection(key string) {
-	nncp.parent.Children = append(
-		nncp.parent.Children,
-		&Node{
-			Kind:  TEXT_INJECTION_NODE_KIND,
-			Title: key,
-		},
-	)
+	nncp.parent.AddChild(node.TEXT_INJECTION_NODE_KIND, []string{key})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(
 			injection{
@@ -111,13 +83,7 @@ func (nncp *NestedNodesConfiguringProxy) TextInjection(key string) {
 	})
 }
 func (nncp *NestedNodesConfiguringProxy) UnsafeTextInjection(key string) {
-	nncp.parent.Children = append(
-		nncp.parent.Children,
-		&Node{
-			Kind:  TEXT_INJECTION_NODE_KIND,
-			Title: key,
-		},
-	)
+	nncp.parent.AddChild(node.UNSAFE_TEXT_INJECTION_NODE_KIND, []string{key})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(
 			injection{
@@ -126,37 +92,19 @@ func (nncp *NestedNodesConfiguringProxy) UnsafeTextInjection(key string) {
 	})
 }
 func (nncp *NestedNodesConfiguringProxy) Text(text string) {
-	nncp.parent.Children = append(
-		nncp.parent.Children,
-		&Node{
-			Kind:  TEXT_NODE_KIND,
-			Title: TEXT_NODE_TITLE,
-		},
-	)
+	nncp.parent.AddChild(node.TEXT_NODE_KIND, []string{})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(safeTextReplacer.Replace(text))
 	})
 }
 func (nncp *NestedNodesConfiguringProxy) UnsafeText(text string) {
-	nncp.parent.Children = append(
-		nncp.parent.Children,
-		&Node{
-			Kind:  TEXT_NODE_KIND,
-			Title: TEXT_NODE_TITLE,
-		},
-	)
+	nncp.parent.AddChild(node.UNSAFE_TEXT_NODE_KIND, []string{})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(text)
 	})
 }
 func (nncp *NestedNodesConfiguringProxy) Repeat(key string, t *Template) {
-	nncp.parent.Children = append(
-		nncp.parent.Children,
-		&Node{
-			Kind:  REPEAT_NODE_KIND,
-			Title: key,
-		},
-	)
+	nncp.parent.AddChild(node.REPEAT_NODE_KIND, []string{key})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(
 			repetition{
