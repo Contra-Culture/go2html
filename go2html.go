@@ -36,9 +36,11 @@ const (
 var safeTextReplacer = strings.NewReplacer("<", "&lt;", ">", "&gt;", "\"", "&quot", "'", "&quot")
 
 func NewTemplate(key string, configure func(*TemplateConfiguringProxy)) *Template {
+	fs := []interface{}{}
 	t := &Template{
 		key:       key,
-		fragments: fragments.New(),
+		nodes:     []*Node{},
+		fragments: fragments.New(fs),
 	}
 	configure(&TemplateConfiguringProxy{
 		template: t,
@@ -47,6 +49,9 @@ func NewTemplate(key string, configure func(*TemplateConfiguringProxy)) *Templat
 }
 func (t *Template) Nodes() []*Node {
 	return t.nodes
+}
+func (t *Template) Fragments() []interface{} {
+	return t.fragments.Fragments()
 }
 func (t *Template) Populate(rawReplacements map[string]interface{}) string {
 	var sb strings.Builder

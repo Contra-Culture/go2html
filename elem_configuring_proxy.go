@@ -8,48 +8,56 @@ import (
 
 type (
 	ElemConfiguringProxy struct {
-		tcp  *TemplateConfiguringProxy
-		node *Node
-		path fragments.NodePath
+		tcp     *TemplateConfiguringProxy
+		node    *Node
+		context *fragments.Context
 	}
 )
 
 func (ecp *ElemConfiguringProxy) AttrInjection(key string) {
-	ecp.tcp.template.fragments.Append(
-		" ",
-		ecp.path,
-	)
 	fragment := injection{
 		key: key,
 	}
-	ecp.tcp.template.fragments.Append(
-		fragment,
-		ecp.path,
+	ecp.context.InContext(
+		func(c *fragments.Context) {
+			c.Append(" ")
+			c.Append(fragment)
+		})
+	ecp.node.Children = append(
+		ecp.node.Children,
+		&Node{
+			Kind:  ATTRIBUTE_INJECTION_NODE_KIND,
+			Title: key,
+		},
 	)
-	ecp.node.AttributeInjections[key] = fragment
 }
 func (ecp *ElemConfiguringProxy) AttrValueInjection(name string, key string) {
-	ecp.tcp.template.fragments.Append(
-		fmt.Sprintf(" %s=\"", name),
-		ecp.path,
-	)
 	fragment := injection{
 		key: key,
 	}
-	ecp.tcp.template.fragments.Append(
-		fragment,
-		ecp.path,
+	ecp.context.InContext(
+		func(c *fragments.Context) {
+			c.Append(fmt.Sprintf(" %s=\"", name))
+			c.Append(fragment)
+			c.Append("\"")
+		})
+	ecp.node.Children = append(
+		ecp.node.Children,
+		&Node{
+			Kind:  ATTRIBUTE_VALUE_INJECTION_NODE_KIND,
+			Title: key,
+		},
 	)
-	ecp.tcp.template.fragments.Append(
-		"\"",
-		ecp.path,
-	)
-	ecp.node.AttributeValueInjections[key] = fragment
 }
 func (ecp *ElemConfiguringProxy) Attr(name string, value string) {
-	ecp.tcp.template.fragments.Append(
-		fmt.Sprintf(" %s=\"%s\"", name, value),
-		ecp.path,
-	)
-	ecp.node.Attributes[name] = value
+	ecp.context.InContext(
+		func(c *fragments.Context) {
+			c.Append(fmt.Sprintf(" %s=\"%s\"", name, value))
+		})
+	ecp.node.Children = append(
+		ecp.node.Children,
+		&Node{
+			Kind:  ATTRIBUTE_NODE_KIND,
+			Title: name,
+		})
 }
