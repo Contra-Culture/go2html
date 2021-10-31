@@ -21,6 +21,9 @@ type (
 		key       string
 		modifiers []func(string) string
 	}
+	templateInjection struct {
+		key string
+	}
 	repetition struct {
 		key      string
 		template *Template
@@ -70,6 +73,22 @@ func (t *Template) Populate(rawReplacements map[string]interface{}) string {
 				repl = modify(repl)
 			}
 			sb.WriteString(repl)
+		case templateInjection:
+			rawNestedReplacement, _ := rawReplacements[fragment.key]
+			nestedReplacement, _ := rawNestedReplacement.(map[string]interface{})
+			rawTemplate, _ := nestedReplacement["template"]
+			rawValues := nestedReplacement["values"]
+			switch values := rawValues.(type) {
+			case map[string]interface{}:
+				switch template := rawTemplate.(type) {
+				case *Template:
+					sb.WriteString(template.Populate(values))
+				default:
+					panic("no template provided")
+				}
+			default:
+				panic("no values provided")
+			}
 		case *Template:
 			rawNestedReplacement, _ := rawReplacements[fragment.key]
 			nestedReplacement, _ := rawNestedReplacement.(map[string]interface{})

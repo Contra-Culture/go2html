@@ -44,6 +44,7 @@ var _ = Describe("go2html", func() {
 								e.AttrValueInjection("data-confirm", "div1-data-confirm")
 							},
 							func(n *NestedNodesConfiguringProxy) {
+								n.TemplateInjection("templateINJ")
 								n.Elem(
 									"h1",
 									func(e *ElemConfiguringProxy) {
@@ -105,7 +106,23 @@ var _ = Describe("go2html", func() {
 								"div1-attr":         "title=\"Some title\"",
 								"div1-data-ok":      "1",
 								"div1-data-confirm": "1",
-								"span1-text":        "Some text here.",
+								"templateINJ": map[string]interface{}{
+									"template": NewTemplate("templateINJ", func(c *TemplateConfiguringProxy) {
+										c.Elem(
+											"p",
+											func(c *ElemConfiguringProxy) {
+												c.AttrValueInjection("class", "value1")
+											},
+											func(c *NestedNodesConfiguringProxy) {
+												c.TextInjection("value2")
+											})
+									}),
+									"values": map[string]interface{}{
+										"value1": "Value-1-class",
+										"value2": "Value-2-text",
+									},
+								},
+								"span1-text": "Some text here.",
 								"nestedTemplate1": map[string]interface{}{
 									"header2-class":   "subheader",
 									"paragraph2-text": "Second <i>paragraph</i>.",
@@ -117,8 +134,7 @@ var _ = Describe("go2html", func() {
 								},
 							},
 						),
-					).To(Equal(
-						"<!DOCTYPE html><!-- comment text -->Some text here.Inserted text here.<p class=\"paragraph\">Inserted <b>paragraph1</b> text.</p><div title=\"Some title\" data-ok=\"1\" data-confirm=\"1\"><h1 class=\"div-header\">Header1<span>Some text here.</span></h1><h2 class=\"subheader\"></h2><p>Second &lt;i&gt;paragraph&lt;/i&gt;.</p><p class=\"repeatable-paragraph\">Injected paragraph text 1.</p><p class=\"repeatable-paragraph\">Injected paragraph text 2.</p><p class=\"repeatable-paragraph\">Injected paragraph text 3.</p></div>"))
+					).To(Equal("<!DOCTYPE html><!-- comment text -->Some text here.Inserted text here.<p class=\"paragraph\">Inserted <b>paragraph1</b> text.</p><div title=\"Some title\" data-ok=\"1\" data-confirm=\"1\"><p class=\"Value-1-class\">Value-2-text</p><h1 class=\"div-header\">Header1<span>Some text here.</span></h1><h2 class=\"subheader\"></h2><p>Second &lt;i&gt;paragraph&lt;/i&gt;.</p><p class=\"repeatable-paragraph\">Injected paragraph text 1.</p><p class=\"repeatable-paragraph\">Injected paragraph text 2.</p><p class=\"repeatable-paragraph\">Injected paragraph text 3.</p></div>"))
 				})
 			})
 		})

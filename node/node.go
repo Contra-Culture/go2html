@@ -18,6 +18,7 @@ const (
 	ATTRIBUTE_INJECTION_NODE_KIND
 	ATTRIBUTE_VALUE_INJECTION_NODE_KIND
 	TEMPLATE_NODE_KIND
+	TEMPLATE_INJECTION_NODE_KIND
 	COMMENT_NODE_KIND
 	DOCTYPE_NODE_KIND
 	TEXT_INJECTION_NODE_KIND
@@ -40,6 +41,8 @@ func New(k Kind, tinj []string) *Node {
 		t = fmt.Sprintf("%s=?%s", tinj[0], tinj[1])
 	case TEMPLATE_NODE_KIND:
 		t = fmt.Sprintf("template:%s", tinj[0])
+	case TEMPLATE_INJECTION_NODE_KIND:
+		t = fmt.Sprintf("template:?%s", tinj[0])
 	case COMMENT_NODE_KIND:
 		t = "<!-->"
 	case DOCTYPE_NODE_KIND:
@@ -84,6 +87,8 @@ func String(k Kind) string {
 		return "attribute-value-injection"
 	case TEMPLATE_NODE_KIND:
 		return "template"
+	case TEMPLATE_INJECTION_NODE_KIND:
+		return "template-injection"
 	case COMMENT_NODE_KIND:
 		return "comment"
 	case DOCTYPE_NODE_KIND:
