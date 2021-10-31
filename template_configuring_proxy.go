@@ -61,6 +61,18 @@ func (tcp *TemplateConfiguringProxy) Template(key string, t *Template) {
 			})
 	})
 }
+func (tcp *TemplateConfiguringProxy) TemplateInjection(key string) {
+	tcp.template.nodes = append(
+		tcp.template.nodes,
+		node.New(node.TEMPLATE_INJECTION_NODE_KIND, []string{key}),
+	)
+	tcp.template.fragments.InContext(func(c *fragments.Context) {
+		c.Append(
+			templateInjection{
+				key: key,
+			})
+	})
+}
 func (tcp *TemplateConfiguringProxy) Comment(text string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,

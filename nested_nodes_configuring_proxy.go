@@ -58,6 +58,15 @@ func (nncp *NestedNodesConfiguringProxy) Template(key string, t *Template) {
 			})
 	})
 }
+func (nncp *NestedNodesConfiguringProxy) TemplateInjection(key string) {
+	nncp.parent.AddChild(node.TEMPLATE_INJECTION_NODE_KIND, []string{key})
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(
+			templateInjection{
+				key: key,
+			})
+	})
+}
 func (nncp *NestedNodesConfiguringProxy) Comment(text string) {
 	nncp.parent.AddChild(node.COMMENT_NODE_KIND, []string{})
 	nncp.context.InContext(func(c *fragments.Context) {
