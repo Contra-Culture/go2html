@@ -24,7 +24,7 @@ func Reg(name string) *TemplateRegistry {
 		dirs: map[string]*TemplateRegistryDir{},
 	}
 }
-func (r *TemplateRegistry) Mkdir(path ...string) (*TemplateRegistryDir, error) {
+func (r *TemplateRegistry) Mkdir(path []string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -33,11 +33,7 @@ func (r *TemplateRegistry) Mkdir(path ...string) (*TemplateRegistryDir, error) {
 		return nil, errors.New("wrong path, path chunk should not be empty")
 	}
 	dir, exists := r.dirs[chunk]
-	if exists {
-		if len(path) == 1 {
-			return nil, fmt.Errorf("directory \"%s\" already exists", chunk)
-		}
-	} else {
+	if !exists {
 		dir = &TemplateRegistryDir{
 			name:     chunk,
 			content:  map[string]*Template{},
@@ -48,9 +44,9 @@ func (r *TemplateRegistry) Mkdir(path ...string) (*TemplateRegistryDir, error) {
 	if len(path) == 1 {
 		return dir, nil
 	}
-	return dir.Mkdir(path[1:]...)
+	return dir.Mkdir(path[1:])
 }
-func (r *TemplateRegistry) Dir(path ...string) (*TemplateRegistryDir, error) {
+func (r *TemplateRegistry) Dir(path []string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -58,25 +54,21 @@ func (r *TemplateRegistry) Dir(path ...string) (*TemplateRegistryDir, error) {
 	if len(chunk) < 1 {
 		return nil, errors.New("wrong path, path chunk should not be empty")
 	}
-	dir, ok := r.dirs[chunk]
-	if !ok {
+	dir, exists := r.dirs[chunk]
+	if !exists {
 		return nil, fmt.Errorf("wrong path, dir \"%s\" is not found", chunk)
 	}
 	if len(path) == 1 {
 		return dir, nil
 	}
-	dir, err := dir.Dir(path[1:]...)
-	if err != nil {
-		return nil, err
-	}
-	return dir, nil
+	return dir.Dir(path[1:])
 }
-func (r *TemplateRegistry) Add(t *Template, path ...string) (err error) {
+func (r *TemplateRegistry) Add(t *Template, path []string) (err error) {
 	if len(path) < 2 {
 		return fmt.Errorf("wrong path \"%s\", should have at least two chunks", strings.Join(path, "/"))
 	}
 	prevIdx := len(path) - 1
-	dir, err := r.Dir(path[:prevIdx]...)
+	dir, err := r.Mkdir(path[:prevIdx])
 	if err != nil {
 		return
 	}
@@ -87,24 +79,24 @@ func (r *TemplateRegistry) Add(t *Template, path ...string) (err error) {
 	dir.content[path[prevIdx]] = t
 	return
 }
-func (r *TemplateRegistry) Get(path ...string) (t *Template, err error) {
+func (r *TemplateRegistry) Get(path []string) (t *Template, err error) {
 	if len(path) < 2 {
 		return nil, fmt.Errorf("wrong path \"%s\", should have at least two chunks", strings.Join(path, "/"))
 	}
 	templateKey := path[len(path)-1]
 	dirPath := path[:len(path)-1]
-	d, err := r.Dir(dirPath...)
+	d, err := r.Dir(dirPath)
 	if err != nil {
 		return
 	}
-	t, ok := d.content[templateKey]
-	if !ok {
+	t, exists := d.content[templateKey]
+	if !exists {
 		return nil, fmt.Errorf("template \"%s\" does not exist", strings.Join(path, "/"))
 	}
 	return
 }
 
-func (d *TemplateRegistryDir) Mkdir(path ...string) (*TemplateRegistryDir, error) {
+func (d *TemplateRegistryDir) Mkdir(path []string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -112,12 +104,12 @@ func (d *TemplateRegistryDir) Mkdir(path ...string) (*TemplateRegistryDir, error
 	if len(chunk) < 1 {
 		return nil, errors.New("wrong path, path chunk should not be empty")
 	}
-	dir, exists := d.children[chunk]
+	_, exists := d.content[chunk]
 	if exists {
-		if len(path) == 1 {
-			return nil, fmt.Errorf("directory \"%s\" already exists", chunk)
-		}
-	} else {
+		return nil, fmt.Errorf("naming conflict with \"%s\" path: there is already a template with \"%s\" name", strings.Join(path, "/"), path[len(path) - 1])
+	}
+	dir, exists := d.children[chunk]
+	if !exists {
 		dir = &TemplateRegistryDir{
 			name:     chunk,
 			content:  map[string]*Template{},
@@ -128,9 +120,9 @@ func (d *TemplateRegistryDir) Mkdir(path ...string) (*TemplateRegistryDir, error
 	if len(path) == 1 {
 		return dir, nil
 	}
-	return dir.Mkdir(path[1:]...)
+	return dir.Mkdir(path[1:])
 }
-func (d *TemplateRegistryDir) Dir(path ...string) (*TemplateRegistryDir, error) {
+func (d *TemplateRegistryDir) Dir(path []string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -138,20 +130,16 @@ func (d *TemplateRegistryDir) Dir(path ...string) (*TemplateRegistryDir, error) 
 	if len(chunk) < 1 {
 		return nil, errors.New("wrong path, path chunk should not be empty")
 	}
-	dir, ok := d.children[chunk]
-	if !ok {
+	dir, exists := d.children[chunk]
+	if !exists {
 		return nil, fmt.Errorf("wrong path, dir \"%s\" is not found", chunk)
 	}
 	if len(path) == 1 {
 		return dir, nil
 	}
-	dir, err := dir.Dir(path[1:]...)
-	if err != nil {
-		return nil, err
-	}
-	return dir, nil
+	return dir.Dir(path[1:])
 }
-func (d *TemplateRegistryDir) Add(t *Template, path ...string) (err error) {
+func (d *TemplateRegistryDir) Add(t *Template, path []string) (err error) {
 	if len(path) < 1 {
 		return errors.New("wrong path, should have at least one chunk")
 	}
@@ -164,36 +152,37 @@ func (d *TemplateRegistryDir) Add(t *Template, path ...string) (err error) {
 		return
 	}
 	prevIdx := len(path) - 1
-	dir, err := d.Dir(path[:prevIdx]...)
+	dir, err := d.Mkdir(path[:prevIdx])
 	if err != nil {
 		return
 	}
 	_, exists := dir.content[path[prevIdx]]
 	if exists {
+		// FIXME: Looks like this if condition is not correct.
 		return fmt.Errorf("template \"%s\" does not exist", strings.Join(path, "/"))
 	}
 	dir.content[path[prevIdx]] = t
 	return
 }
-func (d *TemplateRegistryDir) Get(path ...string) (t *Template, err error) {
+func (d *TemplateRegistryDir) Get(path []string) (t *Template, err error) {
 	if len(path) < 1 {
 		return nil, fmt.Errorf("wrong path \"%s\", should have at least one chunk", strings.Join(path, "/"))
 	}
 	if len(path) == 1 {
-		t, ok := d.content[path[0]]
-		if !ok {
+		t, exists := d.content[path[0]]
+		if !exists {
 			return nil, fmt.Errorf("template \"%s\" does not exist", strings.Join(path, "/"))
 		}
 		return t, nil
 	}
 	templateKey := path[len(path)-1]
 	dirPath := path[:len(path)-1]
-	dir, err := d.Dir(dirPath...)
+	dir, err := d.Dir(dirPath)
 	if err != nil {
 		return
 	}
-	t, ok := dir.content[templateKey]
-	if !ok {
+	t, exists := dir.content[templateKey]
+	if !exists {
 		return nil, fmt.Errorf("template \"%s\" does not exist", strings.Join(path, "/"))
 	}
 	return
