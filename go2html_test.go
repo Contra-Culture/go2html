@@ -10,7 +10,7 @@ var _ = Describe("go2html", func() {
 	Describe("Template", func() {
 		Describe("NewTemplate()", func() {
 			It("returns template", func() {
-				t := NewTemplate("test", func(t *TemplateConfiguringProxy) {
+				t := NewTemplate("test", func(t *TemplateCfgr) {
 					t.Comment("comment text")
 				})
 				Expect(t).NotTo(BeNil())
@@ -19,43 +19,43 @@ var _ = Describe("go2html", func() {
 		Describe(".Populate()", func() {
 			Context("when all replacements provided", func() {
 				It("returns string", func() {
-					t := NewTemplate("test", func(t *TemplateConfiguringProxy) {
+					t := NewTemplate("test", func(t *TemplateCfgr) {
 						t.Comment("comment text")
 					})
 					Expect(t.Populate(map[string]interface{}{})).To(Equal("<!-- comment text -->"))
-					t = NewTemplate("test", func(t *TemplateConfiguringProxy) {
+					t = NewTemplate("test", func(t *TemplateCfgr) {
 						t.Doctype()
 						t.Comment("comment text")
 						t.Text("Some text here.")
 						t.TextInjection("text1")
 						t.Elem(
 							"p",
-							func(e *ElemConfiguringProxy) {
+							func(e *ElemCfgr) {
 								e.Attr("class", "paragraph")
 							},
-							func(n *NestedNodesConfiguringProxy) {
+							func(n *NestedNodesCfgr) {
 								n.UnsafeTextInjection("paragraph1")
 							})
 						t.Elem(
 							"div",
-							func(e *ElemConfiguringProxy) {
+							func(e *ElemCfgr) {
 								e.AttrInjection("div1-attr")
 								e.AttrValueInjection("data-ok", "div1-data-ok")
 								e.AttrValueInjection("data-confirm", "div1-data-confirm")
 							},
-							func(n *NestedNodesConfiguringProxy) {
+							func(n *NestedNodesCfgr) {
 								n.TemplateInjection("templateINJ")
 								n.Elem(
 									"h1",
-									func(e *ElemConfiguringProxy) {
+									func(e *ElemCfgr) {
 										e.Attr("class", "div-header")
 									},
-									func(n *NestedNodesConfiguringProxy) {
+									func(n *NestedNodesCfgr) {
 										n.Text("Header1")
 										n.Elem(
 											"span",
-											func(e *ElemConfiguringProxy) {},
-											func(n *NestedNodesConfiguringProxy) {
+											func(e *ElemCfgr) {},
+											func(n *NestedNodesCfgr) {
 												n.TextInjection("span1-text")
 											},
 										)
@@ -64,18 +64,18 @@ var _ = Describe("go2html", func() {
 									"",
 									NewTemplate(
 										"nestedTemplate1",
-										func(t *TemplateConfiguringProxy) {
+										func(t *TemplateCfgr) {
 											t.Elem(
 												"h2",
-												func(e *ElemConfiguringProxy) {
+												func(e *ElemCfgr) {
 													e.AttrValueInjection("class", "header2-class")
 												},
-												func(n *NestedNodesConfiguringProxy) {},
+												func(n *NestedNodesCfgr) {},
 											)
 											t.Elem(
 												"p",
-												func(*ElemConfiguringProxy) {},
-												func(n *NestedNodesConfiguringProxy) {
+												func(*ElemCfgr) {},
+												func(n *NestedNodesCfgr) {
 													n.TextInjection("paragraph2-text")
 												},
 											)
@@ -84,13 +84,13 @@ var _ = Describe("go2html", func() {
 									"paragraphs",
 									NewTemplate(
 										"nestedTemplate1",
-										func(t *TemplateConfiguringProxy) {
+										func(t *TemplateCfgr) {
 											t.Elem(
 												"p",
-												func(e *ElemConfiguringProxy) {
+												func(e *ElemCfgr) {
 													e.Attr("class", "repeatable-paragraph")
 												},
-												func(n *NestedNodesConfiguringProxy) {
+												func(n *NestedNodesCfgr) {
 													n.TextInjection("paragraph-text")
 												},
 											)
@@ -107,13 +107,13 @@ var _ = Describe("go2html", func() {
 								"div1-data-ok":      "1",
 								"div1-data-confirm": "1",
 								"templateINJ": map[string]interface{}{
-									"template": NewTemplate("templateINJ", func(c *TemplateConfiguringProxy) {
+									"template": NewTemplate("templateINJ", func(c *TemplateCfgr) {
 										c.Elem(
 											"p",
-											func(c *ElemConfiguringProxy) {
+											func(c *ElemCfgr) {
 												c.AttrValueInjection("class", "value1")
 											},
-											func(c *NestedNodesConfiguringProxy) {
+											func(c *NestedNodesCfgr) {
 												c.TextInjection("value2")
 											})
 									}),
