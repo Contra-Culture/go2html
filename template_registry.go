@@ -13,8 +13,7 @@ type (
 	}
 	TemplateRegistryDir struct {
 		name     string
-		content  map[string]*Template
-		children map[string]*TemplateRegistryDir
+		content  map[string]interface{}
 	}
 )
 
@@ -36,8 +35,7 @@ func (r *TemplateRegistry) Mkdir(path []string) (*TemplateRegistryDir, error) {
 	if !exists {
 		dir = &TemplateRegistryDir{
 			name:     chunk,
-			content:  map[string]*Template{},
-			children: map[string]*TemplateRegistryDir{},
+			content:  map[string]interface{}{},
 		}
 		r.dirs[chunk] = dir
 	}
@@ -89,9 +87,13 @@ func (r *TemplateRegistry) Get(path []string) (t *Template, err error) {
 	if err != nil {
 		return
 	}
-	t, exists := d.content[templateKey]
+	i, exists := d.content[templateKey]
 	if !exists {
 		return nil, fmt.Errorf("template \"%s\" does not exist", strings.Join(path, "/"))
+	}
+	t, ok := i.(*Template)
+	if !ok {
+		return nil, fmt.Errorf("type error with \"%s\" path: found directory with \"%s\" name instead of template", strings.Join(path, "/"), path[len(path) - 1])
 	}
 	return
 }
@@ -104,23 +106,27 @@ func (d *TemplateRegistryDir) Mkdir(path []string) (*TemplateRegistryDir, error)
 	if len(chunk) < 1 {
 		return nil, errors.New("wrong path, path chunk should not be empty")
 	}
-	_, exists := d.content[chunk]
-	if exists {
-		return nil, fmt.Errorf("naming conflict with \"%s\" path: there is already a template with \"%s\" name", strings.Join(path, "/"), path[len(path) - 1])
-	}
-	dir, exists := d.children[chunk]
+	i, exists := d.content[chunk]
 	if !exists {
-		dir = &TemplateRegistryDir{
+		dir := &TemplateRegistryDir{
 			name:     chunk,
-			content:  map[string]*Template{},
-			children: map[string]*TemplateRegistryDir{},
+			content:  map[string]interface{}{},
 		}
-		d.children[chunk] = dir
+		d.content[chunk] = dir
+		if len(path) == 1 {
+			return dir, nil
+		}
+		return dir.Mkdir(path[1:])
+	} else {
+		dir, ok := i.(*TemplateRegistryDir)
+		if !ok {
+			return nil, fmt.Errorf("naming conflict with \"%s\" path: there is already a template with \"%s\" name", strings.Join(path, "/"), path[len(path) - 1])
+		}
+		if len(path) == 1 {
+			return dir, nil
+		}
+		return dir.Mkdir(path[1:])
 	}
-	if len(path) == 1 {
-		return dir, nil
-	}
-	return dir.Mkdir(path[1:])
 }
 func (d *TemplateRegistryDir) Dir(path []string) (*TemplateRegistryDir, error) {
 	if len(path) < 1 {
@@ -130,9 +136,13 @@ func (d *TemplateRegistryDir) Dir(path []string) (*TemplateRegistryDir, error) {
 	if len(chunk) < 1 {
 		return nil, errors.New("wrong path, path chunk should not be empty")
 	}
-	dir, exists := d.children[chunk]
+	i, exists := d.content[chunk]
 	if !exists {
 		return nil, fmt.Errorf("wrong path, dir \"%s\" is not found", chunk)
+	}
+	dir, ok := i.(*TemplateRegistryDir)
+	if !ok {
+		return nil, fmt.Errorf("type error with \"%s\" path: found template with \"%s\" name instead of directory", strings.Join(path, "/"), path[len(path) - 1])
 	}
 	if len(path) == 1 {
 		return dir, nil
@@ -169,9 +179,13 @@ func (d *TemplateRegistryDir) Get(path []string) (t *Template, err error) {
 		return nil, fmt.Errorf("wrong path \"%s\", should have at least one chunk", strings.Join(path, "/"))
 	}
 	if len(path) == 1 {
-		t, exists := d.content[path[0]]
+		i, exists := d.content[path[0]]
 		if !exists {
 			return nil, fmt.Errorf("template \"%s\" does not exist", strings.Join(path, "/"))
+		}
+		t, ok := i.(*Template)
+		if !ok {
+			return nil, fmt.Errorf("type error with \"%s\" path: found directory with \"%s\" name instead of template", strings.Join(path, "/"), path[len(path) - 1])
 		}
 		return t, nil
 	}
@@ -181,9 +195,13 @@ func (d *TemplateRegistryDir) Get(path []string) (t *Template, err error) {
 	if err != nil {
 		return
 	}
-	t, exists := dir.content[templateKey]
+	i, exists := dir.content[templateKey]
 	if !exists {
 		return nil, fmt.Errorf("template \"%s\" does not exist", strings.Join(path, "/"))
+	}
+	t, ok := i.(*Template)
+	if !ok {
+		return nil, fmt.Errorf("type error with \"%s\" path: found directory with \"%s\" name instead of template", strings.Join(path, "/"), path[len(path) - 1])
 	}
 	return
 }
