@@ -42,14 +42,14 @@ const (
 
 var safeTextReplacer = strings.NewReplacer("<", "&lt;", ">", "&gt;", "\"", "&quot", "'", "&quot")
 
-func NewTemplate(key string, configure func(*TemplateConfiguringProxy)) *Template {
+func NewTemplate(key string, configure func(*TemplateCfgr)) *Template {
 	fs := []interface{}{}
 	t := &Template{
 		key:       key,
 		nodes:     []*node.Node{},
 		fragments: fragments.New(fs),
 	}
-	configure(&TemplateConfiguringProxy{
+	configure(&TemplateCfgr{
 		template: t,
 	})
 	return t

@@ -8,14 +8,14 @@ import (
 )
 
 type (
-	ElemConfiguringProxy struct {
-		tcp     *TemplateConfiguringProxy
+	ElemCfgr struct {
+		tcp     *TemplateCfgr
 		node    *node.Node
 		context *fragments.Context
 	}
 )
 
-func (ecp *ElemConfiguringProxy) AttrInjection(key string) {
+func (ecp *ElemCfgr) AttrInjection(key string) {
 	fragment := injection{
 		key: key,
 	}
@@ -26,7 +26,7 @@ func (ecp *ElemConfiguringProxy) AttrInjection(key string) {
 		})
 	ecp.node.AddChild(node.ATTRIBUTE_INJECTION_NODE_KIND, []string{key})
 }
-func (ecp *ElemConfiguringProxy) AttrValueInjection(name string, key string) {
+func (ecp *ElemCfgr) AttrValueInjection(name string, key string) {
 	fragment := injection{
 		key: key,
 	}
@@ -38,7 +38,7 @@ func (ecp *ElemConfiguringProxy) AttrValueInjection(name string, key string) {
 		})
 	ecp.node.AddChild(node.ATTRIBUTE_VALUE_INJECTION_NODE_KIND, []string{name, key})
 }
-func (ecp *ElemConfiguringProxy) Attr(name string, value string) {
+func (ecp *ElemCfgr) Attr(name string, value string) {
 	ecp.context.InContext(
 		func(c *fragments.Context) {
 			c.Append(fmt.Sprintf(" %s=\"%s\"", name, value))

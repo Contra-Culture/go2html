@@ -8,23 +8,23 @@ import (
 )
 
 type (
-	TemplateConfiguringProxy struct {
+	TemplateCfgr struct {
 		template      *Template
 		parentContext *fragments.Context
 	}
 )
 
-func (tcp *TemplateConfiguringProxy) Elem(
+func (tcp *TemplateCfgr) Elem(
 	name string,
-	configureSelf func(*ElemConfiguringProxy),
-	configureNested func(*NestedNodesConfiguringProxy),
+	configureSelf func(*ElemCfgr),
+	configureNested func(*NestedNodesCfgr),
 ) {
 	node := node.New(node.ELEM_NODE_KIND, []string{name})
 	tcp.template.nodes = append(tcp.template.nodes, node)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
 		c.Append(fmt.Sprintf("<%s", name))
 		configureSelf(
-			&ElemConfiguringProxy{
+			&ElemCfgr{
 				tcp:     tcp,
 				node:    node,
 				context: c,
@@ -36,7 +36,7 @@ func (tcp *TemplateConfiguringProxy) Elem(
 		}
 		c.Append(">")
 		configureNested(
-			&NestedNodesConfiguringProxy{
+			&NestedNodesCfgr{
 				tcp:     tcp,
 				parent:  node,
 				context: c,
@@ -44,7 +44,7 @@ func (tcp *TemplateConfiguringProxy) Elem(
 		c.Append(fmt.Sprintf("</%s>", name))
 	})
 }
-func (tcp *TemplateConfiguringProxy) Template(key string, t *Template) {
+func (tcp *TemplateCfgr) Template(key string, t *Template) {
 	if len(key) == 0 {
 		key = t.key
 	}
@@ -61,7 +61,7 @@ func (tcp *TemplateConfiguringProxy) Template(key string, t *Template) {
 			})
 	})
 }
-func (tcp *TemplateConfiguringProxy) TemplateInjection(key string) {
+func (tcp *TemplateCfgr) TemplateInjection(key string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
 		node.New(node.TEMPLATE_INJECTION_NODE_KIND, []string{key}),
@@ -73,7 +73,7 @@ func (tcp *TemplateConfiguringProxy) TemplateInjection(key string) {
 			})
 	})
 }
-func (tcp *TemplateConfiguringProxy) Comment(text string) {
+func (tcp *TemplateCfgr) Comment(text string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
 		node.New(node.COMMENT_NODE_KIND, []string{}),
@@ -82,7 +82,7 @@ func (tcp *TemplateConfiguringProxy) Comment(text string) {
 		c.Append(fmt.Sprintf("<!-- %s -->", text))
 	})
 }
-func (tcp *TemplateConfiguringProxy) Doctype() {
+func (tcp *TemplateCfgr) Doctype() {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
 		node.New(node.DOCTYPE_NODE_KIND, []string{}),
@@ -91,7 +91,7 @@ func (tcp *TemplateConfiguringProxy) Doctype() {
 		c.Append("<!DOCTYPE html>")
 	})
 }
-func (tcp *TemplateConfiguringProxy) TextInjection(key string) {
+func (tcp *TemplateCfgr) TextInjection(key string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
 		node.New(node.TEXT_INJECTION_NODE_KIND, []string{key}),
@@ -106,7 +106,7 @@ func (tcp *TemplateConfiguringProxy) TextInjection(key string) {
 			})
 	})
 }
-func (tcp *TemplateConfiguringProxy) UnsafeTextInjection(key string) {
+func (tcp *TemplateCfgr) UnsafeTextInjection(key string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
 		node.New(node.UNSAFE_TEXT_INJECTION_NODE_KIND, []string{key}),
@@ -118,7 +118,7 @@ func (tcp *TemplateConfiguringProxy) UnsafeTextInjection(key string) {
 			})
 	})
 }
-func (tcp *TemplateConfiguringProxy) Text(text string) {
+func (tcp *TemplateCfgr) Text(text string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
 		node.New(node.TEXT_NODE_KIND, []string{}),
@@ -127,7 +127,7 @@ func (tcp *TemplateConfiguringProxy) Text(text string) {
 		c.Append(safeTextReplacer.Replace(text))
 	})
 }
-func (tcp *TemplateConfiguringProxy) UnsafeText(text string) {
+func (tcp *TemplateCfgr) UnsafeText(text string) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
 		node.New(node.UNSAFE_TEXT_NODE_KIND, []string{}),
@@ -136,7 +136,7 @@ func (tcp *TemplateConfiguringProxy) UnsafeText(text string) {
 		c.Append(text)
 	})
 }
-func (tcp *TemplateConfiguringProxy) Repeat(key string, t *Template) {
+func (tcp *TemplateCfgr) Repeat(key string, t *Template) {
 	tcp.template.nodes = append(
 		tcp.template.nodes,
 		node.New(node.REPEAT_NODE_KIND, []string{key}),

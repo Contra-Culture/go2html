@@ -8,23 +8,23 @@ import (
 )
 
 type (
-	NestedNodesConfiguringProxy struct {
-		tcp     *TemplateConfiguringProxy
+	NestedNodesCfgr struct {
+		tcp     *TemplateCfgr
 		parent  *node.Node
 		context *fragments.Context
 	}
 )
 
-func (nncp *NestedNodesConfiguringProxy) Elem(
+func (nncp *NestedNodesCfgr) Elem(
 	name string,
-	configureSelf func(*ElemConfiguringProxy),
-	configureNested func(*NestedNodesConfiguringProxy),
+	configureSelf func(*ElemCfgr),
+	configureNested func(*NestedNodesCfgr),
 ) {
 	node := nncp.parent.AddChild(node.ELEM_NODE_KIND, []string{name})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(fmt.Sprintf("<%s", name))
 		configureSelf(
-			&ElemConfiguringProxy{
+			&ElemCfgr{
 				tcp:     nncp.tcp,
 				node:    node,
 				context: c,
@@ -36,7 +36,7 @@ func (nncp *NestedNodesConfiguringProxy) Elem(
 		}
 		c.Append(">")
 		configureNested(
-			&NestedNodesConfiguringProxy{
+			&NestedNodesCfgr{
 				tcp:     nncp.tcp,
 				parent:  node,
 				context: c,
@@ -44,7 +44,7 @@ func (nncp *NestedNodesConfiguringProxy) Elem(
 		c.Append(fmt.Sprintf("</%s>", name))
 	})
 }
-func (nncp *NestedNodesConfiguringProxy) Template(key string, t *Template) {
+func (nncp *NestedNodesCfgr) Template(key string, t *Template) {
 	if len(key) == 0 {
 		key = t.key
 	}
@@ -58,7 +58,7 @@ func (nncp *NestedNodesConfiguringProxy) Template(key string, t *Template) {
 			})
 	})
 }
-func (nncp *NestedNodesConfiguringProxy) TemplateInjection(key string) {
+func (nncp *NestedNodesCfgr) TemplateInjection(key string) {
 	nncp.parent.AddChild(node.TEMPLATE_INJECTION_NODE_KIND, []string{key})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(
@@ -67,19 +67,19 @@ func (nncp *NestedNodesConfiguringProxy) TemplateInjection(key string) {
 			})
 	})
 }
-func (nncp *NestedNodesConfiguringProxy) Comment(text string) {
+func (nncp *NestedNodesCfgr) Comment(text string) {
 	nncp.parent.AddChild(node.COMMENT_NODE_KIND, []string{})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(fmt.Sprintf("<!-- %s -->", text))
 	})
 }
-func (nncp *NestedNodesConfiguringProxy) Doctype() {
+func (nncp *NestedNodesCfgr) Doctype() {
 	nncp.parent.AddChild(node.DOCTYPE_NODE_KIND, []string{})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append("<!DOCTYPE html>")
 	})
 }
-func (nncp *NestedNodesConfiguringProxy) TextInjection(key string) {
+func (nncp *NestedNodesCfgr) TextInjection(key string) {
 	nncp.parent.AddChild(node.TEXT_INJECTION_NODE_KIND, []string{key})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(
@@ -91,7 +91,7 @@ func (nncp *NestedNodesConfiguringProxy) TextInjection(key string) {
 			})
 	})
 }
-func (nncp *NestedNodesConfiguringProxy) UnsafeTextInjection(key string) {
+func (nncp *NestedNodesCfgr) UnsafeTextInjection(key string) {
 	nncp.parent.AddChild(node.UNSAFE_TEXT_INJECTION_NODE_KIND, []string{key})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(
@@ -100,19 +100,19 @@ func (nncp *NestedNodesConfiguringProxy) UnsafeTextInjection(key string) {
 			})
 	})
 }
-func (nncp *NestedNodesConfiguringProxy) Text(text string) {
+func (nncp *NestedNodesCfgr) Text(text string) {
 	nncp.parent.AddChild(node.TEXT_NODE_KIND, []string{})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(safeTextReplacer.Replace(text))
 	})
 }
-func (nncp *NestedNodesConfiguringProxy) UnsafeText(text string) {
+func (nncp *NestedNodesCfgr) UnsafeText(text string) {
 	nncp.parent.AddChild(node.UNSAFE_TEXT_NODE_KIND, []string{})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(text)
 	})
 }
-func (nncp *NestedNodesConfiguringProxy) Repeat(key string, t *Template) {
+func (nncp *NestedNodesCfgr) Repeat(key string, t *Template) {
 	nncp.parent.AddChild(node.REPEAT_NODE_KIND, []string{key})
 	nncp.context.InContext(func(c *fragments.Context) {
 		c.Append(
