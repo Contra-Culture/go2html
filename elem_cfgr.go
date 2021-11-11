@@ -15,10 +15,8 @@ type (
 	}
 )
 
-func (ecp *ElemCfgr) AttrInjection(key string) {
-	fragment := injection{
-		key: key,
-	}
+func (ecp *ElemCfgr) AttrsInjection(key string) {
+	fragment := attrsInjection(key)
 	ecp.context.InContext(
 		func(c *fragments.Context) {
 			c.Append(" ")

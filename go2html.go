@@ -1,6 +1,7 @@
 package go2html
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Contra-Culture/go2html/fragments"
@@ -21,13 +22,12 @@ type (
 		key       string
 		modifiers []func(string) string
 	}
-	templateInjection struct {
-		key string
-	}
+	templateInjection string
 	repetition struct {
 		key      string
 		template *Template
 	}
+	attrsInjection string
 )
 
 const (
@@ -74,7 +74,7 @@ func (t *Template) Populate(rawReplacements map[string]interface{}) string {
 			}
 			sb.WriteString(repl)
 		case templateInjection:
-			rawNestedReplacement, _ := rawReplacements[fragment.key]
+			rawNestedReplacement, _ := rawReplacements[string(fragment)]
 			nestedReplacement, _ := rawNestedReplacement.(map[string]interface{})
 			rawTemplate, _ := nestedReplacement["template"]
 			rawValues := nestedReplacement["values"]
@@ -99,6 +99,12 @@ func (t *Template) Populate(rawReplacements map[string]interface{}) string {
 			for _, nestedReplacement := range nestedReplacements {
 				result := fragment.template.Populate(nestedReplacement)
 				sb.WriteString(result)
+			}
+		case attrsInjection:
+			rawRepl, _ := rawReplacements[string(fragment)]
+			repl, _ := rawRepl.(map[string]string)
+			for key, val := range repl {
+				sb.WriteString(fmt.Sprintf("%v=%v", key, val))
 			}
 		}
 	}

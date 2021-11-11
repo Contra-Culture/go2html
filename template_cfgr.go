@@ -67,10 +67,7 @@ func (tcp *TemplateCfgr) TemplateInjection(key string) {
 		node.New(node.TEMPLATE_INJECTION_NODE_KIND, []string{key}),
 	)
 	tcp.template.fragments.InContext(func(c *fragments.Context) {
-		c.Append(
-			templateInjection{
-				key: key,
-			})
+		c.Append(templateInjection(key))
 	})
 }
 func (tcp *TemplateCfgr) Comment(text string) {

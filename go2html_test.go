@@ -39,7 +39,7 @@ var _ = Describe("go2html", func() {
 						t.Elem(
 							"div",
 							func(e *ElemCfgr) {
-								e.AttrInjection("div1-attr")
+								e.AttrsInjection("div1-attr")
 								e.AttrValueInjection("data-ok", "div1-data-ok")
 								e.AttrValueInjection("data-confirm", "div1-data-confirm")
 							},
@@ -103,10 +103,10 @@ var _ = Describe("go2html", func() {
 							map[string]interface{}{
 								"text1":             "Inserted text here.",
 								"paragraph1":        "Inserted <b>paragraph1</b> text.",
-								"div1-attr":         "title=\"Some title\"",
+								"div1-attr":         map[string]string{"title": "\"Some title\""},
 								"div1-data-ok":      "1",
 								"div1-data-confirm": "1",
-								"templateINJ": map[string]interface{}{
+								"templateINJ":       map[string]interface{}{
 									"template": NewTemplate("templateINJ", func(c *TemplateCfgr) {
 										c.Elem(
 											"p",
