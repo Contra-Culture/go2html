@@ -93,6 +93,13 @@ func (d TemplatesReg) Add(t *Template, path []string) (err error) {
 	dir[path[prevIdx]] = t
 	return
 }
+func (d TemplatesReg) T(path []string, key string, configure func(*TemplateCfgr)) (err error) {
+	t := NewTemplate(key, configure)
+	if t == nil {
+		return fmt.Errorf("template \"%s\" with key \"%s\" somehow was not created", strings.Join(path, "/"), key)
+	}
+	return d.Add(t, path)
+}
 func (d TemplatesReg) Get(path []string) (t *Template, err error) {
 	if len(path) < 1 {
 		return nil, fmt.Errorf("wrong path \"%s\", should have at least one chunk", strings.Join(path, "/"))

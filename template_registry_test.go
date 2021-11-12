@@ -53,12 +53,12 @@ var _ = Describe("template registry", func() {
 			Context("when does not exist", func() {
 				It("returns dir", func() {
 					r := Reg()
-					_, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg){
+					_, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg) {
 						dir.Mkdir([]string{"1-1"})
 						dir.Mkdir([]string{"1-2"})
 					})
 					Expect(err).To(BeNil())
-					dir, err := r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
+					dir, err := r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
 						dir.Mkdir([]string{"1-1"})
 						dir.Mkdir([]string{"1-2"})
 					})
@@ -69,36 +69,36 @@ var _ = Describe("template registry", func() {
 			Context("when exists", func() {
 				It("returns dir", func() {
 					r := Reg()
-					_, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg){
+					_, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg) {
 						dir.Mkdir([]string{"1-1"})
 					})
 					Expect(err).NotTo(HaveOccurred())
-					dir, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg){
+					dir, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg) {
 						dir.Mkdir([]string{"1-1"})
 					})
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dir).NotTo(BeNil())
-					_, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
-						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg){
+					_, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
+						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg) {
 							dir.Mkdir([]string{"2-1-1"})
 						})
 					})
 					Expect(err).To(BeNil())
-					dir, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
-						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg){
+					dir, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
+						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg) {
 							dir.Mkdir([]string{"2-1-1"})
 						})
 					})
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dir).NotTo(BeNil())
-					_, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
-						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg){
+					_, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
+						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg) {
 							dir.Mkdir([]string{"2-1-2"})
 						})
 					})
 					Expect(err).To(BeNil())
-					dir, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
-						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg){
+					dir, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
+						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg) {
 							dir.Mkdir([]string{"2-1-2"})
 						})
 					})
@@ -142,6 +142,33 @@ var _ = Describe("template registry", func() {
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal("wrong path, dir \"1-1-1\" is not found"))
 					Expect(dir).To(BeNil())
+				})
+			})
+		})
+		Describe(".T()", func() {
+			Context("when exists", func() {
+				It("fails and returns error", func() {
+					r := Reg()
+					r.Mkdir([]string{"1", "1-1", "1-1-1"})
+					err := r.T([]string{"1", "1-1", "1-1-1", "test-template"}, "test", func(t *TemplateCfgr) {
+						t.Comment("comment text")
+					})
+					Expect(err).NotTo(HaveOccurred())
+					err = r.T([]string{"1", "1-1", "1-1-1", "test-template"}, "test", func(t *TemplateCfgr) {
+						t.Comment("comment text")
+					})
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(Equal("template \"1/1-1/1-1-1/test-template\" already exists"))
+				})
+			})
+			Context("when does not exist", func() {
+				It("adds template", func() {
+					r := Reg()
+					r.Mkdir([]string{"1", "1-1", "1-1-1"})
+					err := r.T([]string{"1", "1-1", "1-1-1", "test-template"}, "test", func(t *TemplateCfgr) {
+						t.Comment("comment text")
+					})
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 		})
