@@ -61,10 +61,7 @@ func (nncp *NestedNodesCfgr) Template(key string, t *Template) {
 func (nncp *NestedNodesCfgr) TemplateInjection(key string) {
 	nncp.parent.AddChild(node.TEMPLATE_INJECTION_NODE_KIND, []string{key})
 	nncp.context.InContext(func(c *fragments.Context) {
-		c.Append(
-			templateInjection{
-				key: key,
-			})
+		c.Append(templateInjection(key))
 	})
 }
 func (nncp *NestedNodesCfgr) Comment(text string) {

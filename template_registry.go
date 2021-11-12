@@ -39,6 +39,14 @@ func (d TemplatesReg) Mkdir(path []string) (TemplatesReg, error) {
 		return nil, fmt.Errorf("naming conflict with \"%s\" path: there is already a template with \"%s\" name", strings.Join(path, "/"), path[len(path) - 1])
 	}
 }
+func (d TemplatesReg) Mkdirf(path []string, f func(dir TemplatesReg)) (TemplatesReg, error) {
+	dir, err := d.Mkdir(path)
+	if err != nil {
+		return nil, err
+	}
+	f(dir)
+	return dir, nil
+}
 func (d TemplatesReg) Dir(path []string) (TemplatesReg, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
