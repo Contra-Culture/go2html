@@ -49,6 +49,64 @@ var _ = Describe("template registry", func() {
 				})
 			})
 		})
+		Describe(".Mkdirf()", func() {
+			Context("when does not exist", func() {
+				It("returns dir", func() {
+					r := Reg()
+					_, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg){
+						dir.Mkdir([]string{"1-1"})
+						dir.Mkdir([]string{"1-2"})
+					})
+					Expect(err).To(BeNil())
+					dir, err := r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
+						dir.Mkdir([]string{"1-1"})
+						dir.Mkdir([]string{"1-2"})
+					})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dir).NotTo(BeNil())
+				})
+			})
+			Context("when exists", func() {
+				It("returns dir", func() {
+					r := Reg()
+					_, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg){
+						dir.Mkdir([]string{"1-1"})
+					})
+					Expect(err).NotTo(HaveOccurred())
+					dir, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg){
+						dir.Mkdir([]string{"1-1"})
+					})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dir).NotTo(BeNil())
+					_, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
+						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg){
+							dir.Mkdir([]string{"2-1-1"})
+						})
+					})
+					Expect(err).To(BeNil())
+					dir, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
+						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg){
+							dir.Mkdir([]string{"2-1-1"})
+						})
+					})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dir).NotTo(BeNil())
+					_, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
+						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg){
+							dir.Mkdir([]string{"2-1-2"})
+						})
+					})
+					Expect(err).To(BeNil())
+					dir, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg){
+						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg){
+							dir.Mkdir([]string{"2-1-2"})
+						})
+					})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dir).NotTo(BeNil())
+				})
+			})
+		})
 		Describe(".Dir()", func() {
 			Context("when exists", func() {
 				It("returns dir", func() {
