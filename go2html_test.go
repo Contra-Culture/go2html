@@ -103,7 +103,7 @@ var _ = Describe("go2html", func() {
 							map[string]interface{}{
 								"text1":             "Inserted text here.",
 								"paragraph1":        "Inserted <b>paragraph1</b> text.",
-								"div1-attr":         map[string]string{"title": "\"Some title\""},
+								"div1-attr":         map[string]string{"title": "Some title"},
 								"div1-data-ok":      "1",
 								"div1-data-confirm": "1",
 								"templateINJ":       map[string]interface{}{

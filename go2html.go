@@ -102,9 +102,13 @@ func (t *Template) Populate(rawReplacements map[string]interface{}) string {
 			}
 		case attrsInjection:
 			rawRepl, _ := rawReplacements[string(fragment)]
-			repl, _ := rawRepl.(map[string]string)
-			for key, val := range repl {
-				sb.WriteString(fmt.Sprintf("%v=%v", key, val))
+			switch repl := rawRepl.(type) {
+			case map[string]string:
+				for key, val := range repl {
+					sb.WriteString(fmt.Sprintf("%s=\"%s\"", key, val))
+				}
+			default:
+				panic("incorrect attrsInjection key-value pair type")
 			}
 		}
 	}

@@ -15,7 +15,7 @@ const (
 	_ Kind = iota
 	ELEM_NODE_KIND
 	ATTRIBUTE_NODE_KIND
-	ATTRIBUTE_INJECTION_NODE_KIND
+	ATTRIBUTES_INJECTION_NODE_KIND
 	ATTRIBUTE_VALUE_INJECTION_NODE_KIND
 	TEMPLATE_NODE_KIND
 	TEMPLATE_INJECTION_NODE_KIND
@@ -35,7 +35,7 @@ func New(k Kind, tinj []string) *Node {
 		t = fmt.Sprintf("<%s>", tinj[0])
 	case ATTRIBUTE_NODE_KIND:
 		t = fmt.Sprintf("%s=", tinj[0])
-	case ATTRIBUTE_INJECTION_NODE_KIND:
+	case ATTRIBUTES_INJECTION_NODE_KIND:
 		t = fmt.Sprintf("?%s=", tinj[0])
 	case ATTRIBUTE_VALUE_INJECTION_NODE_KIND:
 		t = fmt.Sprintf("%s=?%s", tinj[0], tinj[1])
@@ -81,7 +81,7 @@ func String(k Kind) string {
 		return "element"
 	case ATTRIBUTE_NODE_KIND:
 		return "attribute"
-	case ATTRIBUTE_INJECTION_NODE_KIND:
+	case ATTRIBUTES_INJECTION_NODE_KIND:
 		return "attribute-injection"
 	case ATTRIBUTE_VALUE_INJECTION_NODE_KIND:
 		return "attribute-value-injection"

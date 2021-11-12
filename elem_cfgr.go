@@ -22,7 +22,7 @@ func (ecp *ElemCfgr) AttrsInjection(key string) {
 			c.Append(" ")
 			c.Append(fragment)
 		})
-	ecp.node.AddChild(node.ATTRIBUTE_INJECTION_NODE_KIND, []string{key})
+	ecp.node.AddChild(node.ATTRIBUTES_INJECTION_NODE_KIND, []string{key})
 }
 func (ecp *ElemCfgr) AttrValueInjection(name string, key string) {
 	fragment := injection{
