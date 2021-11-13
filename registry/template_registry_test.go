@@ -1,4 +1,4 @@
-package go2html_test
+package registry_test
 
 import (
 	. "github.com/Contra-Culture/go2html"
@@ -7,7 +7,7 @@ import (
 )
 
 var _ = Describe("template registry", func() {
-	Describe("TemplatesReg", func() {
+	Describe("Registry", func() {
 		Describe(".Mkdir()", func() {
 			Context("when does not exist", func() {
 				It("returns dir", func() {
@@ -53,12 +53,12 @@ var _ = Describe("template registry", func() {
 			Context("when does not exist", func() {
 				It("returns dir", func() {
 					r := Reg()
-					_, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg) {
+					_, err := r.Mkdirf([]string{"1"}, func(dir Registry) {
 						dir.Mkdir([]string{"1-1"})
 						dir.Mkdir([]string{"1-2"})
 					})
 					Expect(err).To(BeNil())
-					dir, err := r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
+					dir, err := r.Mkdirf([]string{"2"}, func(dir Registry) {
 						dir.Mkdir([]string{"1-1"})
 						dir.Mkdir([]string{"1-2"})
 					})
@@ -69,36 +69,36 @@ var _ = Describe("template registry", func() {
 			Context("when exists", func() {
 				It("returns dir", func() {
 					r := Reg()
-					_, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg) {
+					_, err := r.Mkdirf([]string{"1"}, func(dir Registry) {
 						dir.Mkdir([]string{"1-1"})
 					})
 					Expect(err).NotTo(HaveOccurred())
-					dir, err := r.Mkdirf([]string{"1"}, func(dir TemplatesReg) {
+					dir, err := r.Mkdirf([]string{"1"}, func(dir Registry) {
 						dir.Mkdir([]string{"1-1"})
 					})
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dir).NotTo(BeNil())
-					_, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
-						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg) {
+					_, err = r.Mkdirf([]string{"2"}, func(dir Registry) {
+						dir.Mkdirf([]string{"2-1"}, func(dir Registry) {
 							dir.Mkdir([]string{"2-1-1"})
 						})
 					})
 					Expect(err).To(BeNil())
-					dir, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
-						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg) {
+					dir, err = r.Mkdirf([]string{"2"}, func(dir Registry) {
+						dir.Mkdirf([]string{"2-1"}, func(dir Registry) {
 							dir.Mkdir([]string{"2-1-1"})
 						})
 					})
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dir).NotTo(BeNil())
-					_, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
-						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg) {
+					_, err = r.Mkdirf([]string{"2"}, func(dir Registry) {
+						dir.Mkdirf([]string{"2-1"}, func(dir Registry) {
 							dir.Mkdir([]string{"2-1-2"})
 						})
 					})
 					Expect(err).To(BeNil())
-					dir, err = r.Mkdirf([]string{"2"}, func(dir TemplatesReg) {
-						dir.Mkdirf([]string{"2-1"}, func(dir TemplatesReg) {
+					dir, err = r.Mkdirf([]string{"2"}, func(dir Registry) {
+						dir.Mkdirf([]string{"2-1"}, func(dir Registry) {
 							dir.Mkdir([]string{"2-1-2"})
 						})
 					})
