@@ -1,4 +1,4 @@
-package go2html
+package registry
 
 import (
 	"errors"
@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-type TemplatesReg map[string]interface{} // interface{} can contain values of *Template or TemplatesReg type
+type Registry map[string]interface{} // interface{} can contain values of *Template or Registry type
 
-func Reg() TemplatesReg {
+func Reg() Registry {
 	return map[string]interface{}{}
 }
 
-func (d TemplatesReg) Mkdir(path []string) (TemplatesReg, error) {
+func (d Registry) Mkdir(path []string) (Registry, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -22,7 +22,7 @@ func (d TemplatesReg) Mkdir(path []string) (TemplatesReg, error) {
 	}
 	i, exists := d[chunk]
 	if !exists {
-		dir := TemplatesReg{}
+		dir := Registry{}
 		d[chunk] = dir
 		if len(path) == 1 {
 			return dir, nil
@@ -30,7 +30,7 @@ func (d TemplatesReg) Mkdir(path []string) (TemplatesReg, error) {
 		return dir.Mkdir(path[1:])
 	}
 	switch dir := i.(type) {
-	case TemplatesReg:
+	case Registry:
 		if len(path) == 1 {
 			return dir, nil
 		}
@@ -39,7 +39,7 @@ func (d TemplatesReg) Mkdir(path []string) (TemplatesReg, error) {
 		return nil, fmt.Errorf("naming conflict with \"%s\" path: there is already a template with \"%s\" name", strings.Join(path, "/"), path[len(path) - 1])
 	}
 }
-func (d TemplatesReg) Mkdirf(path []string, f func(dir TemplatesReg)) (TemplatesReg, error) {
+func (d Registry) Mkdirf(path []string, f func(dir Registry)) (Registry, error) {
 	dir, err := d.Mkdir(path)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (d TemplatesReg) Mkdirf(path []string, f func(dir TemplatesReg)) (Templates
 	f(dir)
 	return dir, nil
 }
-func (d TemplatesReg) Dir(path []string) (TemplatesReg, error) {
+func (d Registry) Dir(path []string) (Registry, error) {
 	if len(path) < 1 {
 		return nil, errors.New("wrong path, should not be empty")
 	}
@@ -60,7 +60,7 @@ func (d TemplatesReg) Dir(path []string) (TemplatesReg, error) {
 		return nil, fmt.Errorf("wrong path, dir \"%s\" is not found", chunk)
 	}
 	switch dir := i.(type) {
-	case TemplatesReg:
+	case Registry:
 		if len(path) == 1 {
 			return dir, nil
 		}
@@ -69,7 +69,7 @@ func (d TemplatesReg) Dir(path []string) (TemplatesReg, error) {
 		return nil, fmt.Errorf("type error with \"%s\" path: found template with \"%s\" name instead of directory", strings.Join(path, "/"), path[len(path) - 1])
 	}
 }
-func (d TemplatesReg) Add(t *Template, path []string) (err error) {
+func (d Registry) Add(t *Template, path []string) (err error) {
 	if len(path) < 1 {
 		return errors.New("wrong path, should have at least one chunk")
 	}
@@ -93,14 +93,14 @@ func (d TemplatesReg) Add(t *Template, path []string) (err error) {
 	dir[path[prevIdx]] = t
 	return
 }
-func (d TemplatesReg) T(path []string, key string, configure func(*TemplateCfgr)) (err error) {
+func (d Registry) T(path []string, key string, configure func(*TemplateCfgr)) (err error) {
 	t := NewTemplate(key, configure)
 	if t == nil {
 		return fmt.Errorf("template \"%s\" with key \"%s\" somehow was not created", strings.Join(path, "/"), key)
 	}
 	return d.Add(t, path)
 }
-func (d TemplatesReg) Get(path []string) (t *Template, err error) {
+func (d Registry) Get(path []string) (t *Template, err error) {
 	if len(path) < 1 {
 		return nil, fmt.Errorf("wrong path \"%s\", should have at least one chunk", strings.Join(path, "/"))
 	}
