@@ -106,7 +106,7 @@ var _ = Describe("go2html", func() {
 								"div1-attr":         map[string]string{"title": "Some title"},
 								"div1-data-ok":      "1",
 								"div1-data-confirm": "1",
-								"templateINJ":       map[string]interface{}{
+								"templateINJ": map[string]interface{}{
 									"template": NewTemplate("templateINJ", func(c *TemplateCfgr) {
 										c.Elem(
 											"p",
