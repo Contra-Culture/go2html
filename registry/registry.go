@@ -10,7 +10,7 @@ import (
 
 type Registry map[string]interface{} // interface{} can contain values of *Template or Registry type
 
-func Reg() Registry {
+func New() Registry {
 	return map[string]interface{}{}
 }
 
