@@ -146,3 +146,24 @@ func (tcp *TemplateCfgr) Repeat(key string, t *Template) {
 			})
 	})
 }
+func (tcp *TemplateCfgr) Variants(vars map[string]*Template, dv *Template) {
+	keys := []string{}
+	for k, v := range vars {
+		if v != nil {
+			keys = append(keys, k)
+			continue
+		}
+		panic(fmt.Sprintf("variant %s has no specified template", k))
+	}
+	tcp.template.nodes = append(
+		tcp.template.nodes,
+		node.New(node.VARIANTS_NODE_KIND, keys),
+	)
+	tcp.template.fragments.InContext(func(c *fragments.Context) {
+		c.Append(
+			variants{
+				variants:       vars,
+				defaultVariant: dv,
+			})
+	})
+}

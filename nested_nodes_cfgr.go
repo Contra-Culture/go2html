@@ -119,3 +119,21 @@ func (nncp *NestedNodesCfgr) Repeat(key string, t *Template) {
 			})
 	})
 }
+func (nncp *NestedNodesCfgr) Variants(vars map[string]*Template, dv *Template) {
+	keys := []string{}
+	for k, v := range vars {
+		if v != nil {
+			keys = append(keys, k)
+			continue
+		}
+		panic(fmt.Sprintf("variant %s has no specified template", k))
+	}
+	nncp.parent.AddChild(node.VARIANTS_NODE_KIND, keys)
+	nncp.context.InContext(func(c *fragments.Context) {
+		c.Append(
+			variants{
+				defaultVariant: dv,
+				variants:       vars,
+			})
+	})
+}

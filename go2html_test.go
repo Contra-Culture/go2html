@@ -44,6 +44,27 @@ var _ = Describe("go2html", func() {
 								e.AttrValueInjection("data-confirm", "div1-data-confirm")
 							},
 							func(n *NestedNodesCfgr) {
+								n.Variants(
+									map[string]*Template{
+										"div_nested_1": NewTemplate(
+											"",
+											func(cfg *TemplateCfgr) {
+												cfg.TextInjection("text")
+											},
+										),
+										"div_nested_2": NewTemplate(
+											"",
+											func(cfg *TemplateCfgr) {
+												cfg.TextInjection("anotherText")
+											},
+										),
+									},
+									NewTemplate(
+										"",
+										func(cfg *TemplateCfgr) {
+											cfg.Text("no variant provided")
+										},
+									))
 								n.TemplateInjection("templateINJ")
 								n.Elem(
 									"h1",
@@ -57,14 +78,32 @@ var _ = Describe("go2html", func() {
 											func(e *ElemCfgr) {},
 											func(n *NestedNodesCfgr) {
 												n.TextInjection("span1-text")
-											},
-										)
+											})
 									})
 								n.Template(
 									"",
 									NewTemplate(
 										"nestedTemplate1",
 										func(t *TemplateCfgr) {
+											t.Variants(
+												map[string]*Template{
+													"nested_nested_1": NewTemplate(
+														"",
+														func(cfg *TemplateCfgr) {
+															cfg.TextInjection("text")
+														}),
+													"nested_nested_2": NewTemplate(
+														"",
+														func(cfg *TemplateCfgr) {
+															cfg.TextInjection("anotherText")
+														}),
+												},
+												NewTemplate(
+													"",
+													func(cfg *TemplateCfgr) {
+														cfg.Text("no variant provided")
+													},
+												))
 											t.Elem(
 												"h2",
 												func(e *ElemCfgr) {
@@ -83,7 +122,7 @@ var _ = Describe("go2html", func() {
 								n.Repeat(
 									"paragraphs",
 									NewTemplate(
-										"nestedTemplate1",
+										"nestedTemplate2",
 										func(t *TemplateCfgr) {
 											t.Elem(
 												"p",
@@ -106,6 +145,9 @@ var _ = Describe("go2html", func() {
 								"div1-attr":         map[string]string{"title": "Some title"},
 								"div1-data-ok":      "1",
 								"div1-data-confirm": "1",
+								"div_nested_1": map[string]interface{}{
+									"text": "variant div_nested_1 text",
+								},
 								"templateINJ": map[string]interface{}{
 									"template": NewTemplate("templateINJ", func(c *TemplateCfgr) {
 										c.Elem(
@@ -134,7 +176,7 @@ var _ = Describe("go2html", func() {
 								},
 							},
 						),
-					).To(Equal("<!DOCTYPE html><!-- comment text -->Some text here.Inserted text here.<p class=\"paragraph\">Inserted <b>paragraph1</b> text.</p><div title=\"Some title\" data-ok=\"1\" data-confirm=\"1\"><p class=\"Value-1-class\">Value-2-text</p><h1 class=\"div-header\">Header1<span>Some text here.</span></h1><h2 class=\"subheader\"></h2><p>Second &lt;i&gt;paragraph&lt;/i&gt;.</p><p class=\"repeatable-paragraph\">Injected paragraph text 1.</p><p class=\"repeatable-paragraph\">Injected paragraph text 2.</p><p class=\"repeatable-paragraph\">Injected paragraph text 3.</p></div>"))
+					).To(Equal("<!DOCTYPE html><!-- comment text -->Some text here.Inserted text here.<p class=\"paragraph\">Inserted <b>paragraph1</b> text.</p><div title=\"Some title\" data-ok=\"1\" data-confirm=\"1\">variant div_nested_1 text<p class=\"Value-1-class\">Value-2-text</p><h1 class=\"div-header\">Header1<span>Some text here.</span></h1>no variant provided<h2 class=\"subheader\"></h2><p>Second &lt;i&gt;paragraph&lt;/i&gt;.</p><p class=\"repeatable-paragraph\">Injected paragraph text 1.</p><p class=\"repeatable-paragraph\">Injected paragraph text 2.</p><p class=\"repeatable-paragraph\">Injected paragraph text 3.</p></div>"))
 				})
 			})
 		})

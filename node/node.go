@@ -1,6 +1,9 @@
 package node
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type (
 	Kind int
@@ -26,6 +29,7 @@ const (
 	TEXT_NODE_KIND
 	UNSAFE_TEXT_NODE_KIND
 	REPEAT_NODE_KIND
+	VARIANTS_NODE_KIND
 )
 
 func New(k Kind, tinj []string) *Node {
@@ -57,8 +61,10 @@ func New(k Kind, tinj []string) *Node {
 		t = "\"...\"!"
 	case REPEAT_NODE_KIND:
 		t = fmt.Sprintf("repeat(template:%s)", tinj[0])
+	case VARIANTS_NODE_KIND:
+		t = fmt.Sprintf("variants(%s)", strings.Join(tinj, ", "))
 	default:
-		panic(fmt.Sprintf("wrong element kind `%d`", k))
+		panic(fmt.Sprintf("wrong element kind `%d`", k)) // can't occur
 	}
 	return &Node{
 		kind:  k,
@@ -103,6 +109,8 @@ func String(k Kind) string {
 		return "unsafe-text"
 	case REPEAT_NODE_KIND:
 		return "repeat"
+	case VARIANTS_NODE_KIND:
+		return "variants"
 	default:
 		panic(fmt.Sprintf("wrong element kind `%d`", k))
 	}

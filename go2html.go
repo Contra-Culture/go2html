@@ -23,11 +23,15 @@ type (
 		modifiers []func(string) string
 	}
 	templateInjection string
-	repetition struct {
+	repetition        struct {
 		key      string
 		template *Template
 	}
 	attrsInjection string
+	variants       struct {
+		defaultVariant *Template
+		variants       map[string]*Template
+	}
 )
 
 const (
@@ -62,6 +66,7 @@ func (t *Template) Fragments() []interface{} {
 }
 func (t *Template) Populate(rawReplacements map[string]interface{}) string {
 	var sb strings.Builder
+fragmentsLoop:
 	for _, rawFragment := range t.fragments.Fragments() {
 		switch fragment := rawFragment.(type) {
 		case string:
@@ -110,6 +115,26 @@ func (t *Template) Populate(rawReplacements map[string]interface{}) string {
 			default:
 				panic("incorrect attrsInjection key-value pair type")
 			}
+		case variants:
+			for key, template := range fragment.variants {
+				rawNestedReplacements, ok := rawReplacements[key]
+				if ok {
+					switch nestedReplacements := rawNestedReplacements.(type) {
+					case map[string]interface{}:
+						sb.WriteString(template.Populate(nestedReplacements))
+					default:
+						panic("wrong nested params")
+					}
+					continue fragmentsLoop
+				}
+			}
+			if fragment.defaultVariant != nil {
+				sb.WriteString(fragment.defaultVariant.Populate(map[string]interface{}{}))
+				continue fragmentsLoop
+			}
+			panic("one of variants should be provided")
+		default:
+			panic("incorrect fragment") // should not occur
 		}
 	}
 	return sb.String()
