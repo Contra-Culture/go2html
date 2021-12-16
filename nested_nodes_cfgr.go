@@ -5,6 +5,7 @@ import (
 
 	"github.com/Contra-Culture/go2html/fragments"
 	"github.com/Contra-Culture/go2html/node"
+	"github.com/Contra-Culture/report"
 )
 
 type (
@@ -12,6 +13,7 @@ type (
 		tcp     *TemplateCfgr
 		parent  *node.Node
 		context *fragments.Context
+		report  *report.RContext
 	}
 )
 
@@ -40,6 +42,7 @@ func (nncp *NestedNodesCfgr) Elem(
 				tcp:     nncp.tcp,
 				parent:  node,
 				context: c,
+				report:  nncp.report.Contextf("nested: %s", name),
 			})
 		c.Append(fmt.Sprintf("</%s>", name))
 	})
@@ -126,7 +129,7 @@ func (nncp *NestedNodesCfgr) Variants(vars map[string]*Template, dv *Template) {
 			keys = append(keys, k)
 			continue
 		}
-		panic(fmt.Sprintf("variant %s has no specified template", k))
+		nncp.report.Errorf("variant %s has no specified template", k)
 	}
 	nncp.parent.AddChild(node.VARIANTS_NODE_KIND, keys)
 	nncp.context.InContext(func(c *fragments.Context) {

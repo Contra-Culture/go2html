@@ -1,6 +1,7 @@
 package go2html_test
 
 import (
+	"github.com/Contra-Culture/report"
 	. "github.com/Contra-Culture/go2html"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,20 +11,24 @@ var _ = Describe("go2html", func() {
 	Describe("Template", func() {
 		Describe("NewTemplate()", func() {
 			It("returns template", func() {
-				t := NewTemplate("test", func(t *TemplateCfgr) {
+				r := report.New("template")
+				t := NewTemplate(r, "test", func(t *TemplateCfgr) {
 					t.Comment("comment text")
 				})
 				Expect(t).NotTo(BeNil())
+				Expect(r.String()).To(Equal("root: template\n"))
 			})
 		})
 		Describe(".Populate()", func() {
 			Context("when all replacements provided", func() {
 				It("returns string", func() {
-					t := NewTemplate("test", func(t *TemplateCfgr) {
+					r := report.New("template")
+					t := NewTemplate(r, "test", func(t *TemplateCfgr) {
 						t.Comment("comment text")
 					})
 					Expect(t.Populate(map[string]interface{}{})).To(Equal("<!-- comment text -->"))
-					t = NewTemplate("test", func(t *TemplateCfgr) {
+					Expect(r.String()).To(Equal("root: template\n"))
+					t = NewTemplate(r, "test", func(t *TemplateCfgr) {
 						t.Doctype()
 						t.Comment("comment text")
 						t.Text("Some text here.")
@@ -47,12 +52,14 @@ var _ = Describe("go2html", func() {
 								n.Variants(
 									map[string]*Template{
 										"div_nested_1": NewTemplate(
+											r,
 											"",
 											func(cfg *TemplateCfgr) {
 												cfg.TextInjection("text")
 											},
 										),
 										"div_nested_2": NewTemplate(
+											r,
 											"",
 											func(cfg *TemplateCfgr) {
 												cfg.TextInjection("anotherText")
@@ -60,6 +67,7 @@ var _ = Describe("go2html", func() {
 										),
 									},
 									NewTemplate(
+										r,
 										"",
 										func(cfg *TemplateCfgr) {
 											cfg.Text("no variant provided")
@@ -83,22 +91,26 @@ var _ = Describe("go2html", func() {
 								n.Template(
 									"",
 									NewTemplate(
+										r,
 										"nestedTemplate1",
 										func(t *TemplateCfgr) {
 											t.Variants(
 												map[string]*Template{
 													"nested_nested_1": NewTemplate(
+														r,
 														"",
 														func(cfg *TemplateCfgr) {
 															cfg.TextInjection("text")
 														}),
 													"nested_nested_2": NewTemplate(
+														r,
 														"",
 														func(cfg *TemplateCfgr) {
 															cfg.TextInjection("anotherText")
 														}),
 												},
 												NewTemplate(
+													r,
 													"",
 													func(cfg *TemplateCfgr) {
 														cfg.Text("no variant provided")
@@ -122,6 +134,7 @@ var _ = Describe("go2html", func() {
 								n.Repeat(
 									"paragraphs",
 									NewTemplate(
+										r,
 										"nestedTemplate2",
 										func(t *TemplateCfgr) {
 											t.Elem(
@@ -149,7 +162,7 @@ var _ = Describe("go2html", func() {
 									"text": "variant div_nested_1 text",
 								},
 								"templateINJ": map[string]interface{}{
-									"template": NewTemplate("templateINJ", func(c *TemplateCfgr) {
+									"template": NewTemplate(r, "templateINJ", func(c *TemplateCfgr) {
 										c.Elem(
 											"p",
 											func(c *ElemCfgr) {
@@ -177,6 +190,7 @@ var _ = Describe("go2html", func() {
 							},
 						),
 					).To(Equal("<!DOCTYPE html><!-- comment text -->Some text here.Inserted text here.<p class=\"paragraph\">Inserted <b>paragraph1</b> text.</p><div title=\"Some title\" data-ok=\"1\" data-confirm=\"1\">variant div_nested_1 text<p class=\"Value-1-class\">Value-2-text</p><h1 class=\"div-header\">Header1<span>Some text here.</span></h1>no variant provided<h2 class=\"subheader\"></h2><p>Second &lt;i&gt;paragraph&lt;/i&gt;.</p><p class=\"repeatable-paragraph\">Injected paragraph text 1.</p><p class=\"repeatable-paragraph\">Injected paragraph text 2.</p><p class=\"repeatable-paragraph\">Injected paragraph text 3.</p></div>"))
+					Expect(r.String()).To(Equal("root: template\n"))
 				})
 			})
 		})

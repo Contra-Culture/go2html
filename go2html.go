@@ -6,6 +6,7 @@ import (
 
 	"github.com/Contra-Culture/go2html/fragments"
 	"github.com/Contra-Culture/go2html/node"
+	"github.com/Contra-Culture/report"
 )
 
 type (
@@ -16,6 +17,7 @@ type (
 		key       string
 		nodes     []*node.Node
 		fragments *fragments.Fragments
+		report    *report.RContext
 	}
 	elemType  int
 	injection struct {
@@ -46,7 +48,7 @@ const (
 
 var safeTextReplacer = strings.NewReplacer("<", "&lt;", ">", "&gt;", "\"", "&quot", "'", "&quot")
 
-func NewTemplate(key string, configure func(*TemplateCfgr)) *Template {
+func NewTemplate(rc *report.RContext, key string, configure func(*TemplateCfgr)) *Template {
 	fs := []interface{}{}
 	t := &Template{
 		key:       key,
@@ -55,6 +57,7 @@ func NewTemplate(key string, configure func(*TemplateCfgr)) *Template {
 	}
 	configure(&TemplateCfgr{
 		template: t,
+		report:   rc,
 	})
 	return t
 }
@@ -89,10 +92,10 @@ fragmentsLoop:
 				case *Template:
 					sb.WriteString(template.Populate(values))
 				default:
-					panic("no template provided")
+					t.report.Error("no template provided")
 				}
 			default:
-				panic("no values provided")
+				t.report.Error("no values provided")
 			}
 		case *Template:
 			rawNestedReplacement, _ := rawReplacements[fragment.key]
@@ -113,7 +116,7 @@ fragmentsLoop:
 					sb.WriteString(fmt.Sprintf("%s=\"%s\"", key, val))
 				}
 			default:
-				panic("incorrect attrsInjection key-value pair type")
+				t.report.Error("incorrect attrsInjection key-value pair type")
 			}
 		case variants:
 			for key, template := range fragment.variants {
@@ -123,7 +126,7 @@ fragmentsLoop:
 					case map[string]interface{}:
 						sb.WriteString(template.Populate(nestedReplacements))
 					default:
-						panic("wrong nested params")
+						t.report.Error("wrong nested params")
 					}
 					continue fragmentsLoop
 				}
@@ -132,9 +135,9 @@ fragmentsLoop:
 				sb.WriteString(fragment.defaultVariant.Populate(map[string]interface{}{}))
 				continue fragmentsLoop
 			}
-			panic("one of variants should be provided")
+			t.report.Error("one of variants should be provided")
 		default:
-			panic("incorrect fragment") // should not occur
+			t.report.Error("incorrect fragment") // should not occur
 		}
 	}
 	return sb.String()
