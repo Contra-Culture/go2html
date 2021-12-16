@@ -5,12 +5,14 @@ import (
 
 	"github.com/Contra-Culture/go2html/fragments"
 	"github.com/Contra-Culture/go2html/node"
+	"github.com/Contra-Culture/report"
 )
 
 type (
 	TemplateCfgr struct {
 		template      *Template
 		parentContext *fragments.Context
+		report        *report.RContext
 	}
 )
 
@@ -40,6 +42,7 @@ func (tcp *TemplateCfgr) Elem(
 				tcp:     tcp,
 				parent:  node,
 				context: c,
+				report:  tcp.report.Contextf("nested: %s", name),
 			})
 		c.Append(fmt.Sprintf("</%s>", name))
 	})
@@ -153,7 +156,7 @@ func (tcp *TemplateCfgr) Variants(vars map[string]*Template, dv *Template) {
 			keys = append(keys, k)
 			continue
 		}
-		panic(fmt.Sprintf("variant %s has no specified template", k))
+		tcp.report.Errorf("variant %s has no specified template", k)
 	}
 	tcp.template.nodes = append(
 		tcp.template.nodes,
