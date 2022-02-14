@@ -2,7 +2,7 @@ package fragments_test
 
 import (
 	"github.com/Contra-Culture/go2html/fragments"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

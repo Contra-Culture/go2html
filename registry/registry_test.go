@@ -3,7 +3,7 @@ package registry_test
 import (
 	"github.com/Contra-Culture/go2html"
 	. "github.com/Contra-Culture/go2html/registry"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
