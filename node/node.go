@@ -8,9 +8,11 @@ import (
 type (
 	Kind int
 	Node struct {
-		kind     Kind
-		title    string
-		children []*Node
+		kind             Kind
+		title            string
+		isClassNamespece bool
+		classNamespace   string
+		children         []*Node
 	}
 )
 
@@ -30,6 +32,22 @@ const (
 	UNSAFE_TEXT_NODE_KIND
 	REPEAT_NODE_KIND
 	VARIANTS_NODE_KIND
+)
+const (
+	ELEMENT_KIND_STRING                   = "element"
+	ATTRIBUTE_KIND_STRING                 = "attribute"
+	ATTRIBUTE_INJECTION_KIND_STRING       = "attribute-injection"
+	ATTRIBUTE_VALUE_INJECTION_KIND_STRING = "attribute-value-injection"
+	TEMPLATE_KIND_STRING                  = "template"
+	TEMPLATE_INJECTION_KIND_STRING        = "template-injection"
+	COMMENT_KIND_STRING                   = "comment"
+	DOCTYPE_KIND_STRING                   = "doctype"
+	TEXT_INJECTION_KIND_STRING            = "text-injection"
+	UNSAFE_TEXT_INJECTION_KIND_STRING     = "unsafe-text-injection"
+	TEXT_KIND_STRING                      = "text"
+	UNSAFE_TEXT_KIND_STRING               = "unsafe-text"
+	REPEAT_KIND_STRING                    = "repeat"
+	VARIANTS_KIND_STRING                  = "variants"
 )
 
 func New(k Kind, tinj []string) *Node {
@@ -84,33 +102,33 @@ func (n *Node) AddChild(k Kind, tinj []string) *Node {
 func String(k Kind) string {
 	switch k {
 	case ELEM_NODE_KIND:
-		return "element"
+		return ELEMENT_KIND_STRING
 	case ATTRIBUTE_NODE_KIND:
-		return "attribute"
+		return ATTRIBUTE_KIND_STRING
 	case ATTRIBUTES_INJECTION_NODE_KIND:
-		return "attribute-injection"
+		return ATTRIBUTE_INJECTION_KIND_STRING
 	case ATTRIBUTE_VALUE_INJECTION_NODE_KIND:
-		return "attribute-value-injection"
+		return ATTRIBUTE_VALUE_INJECTION_KIND_STRING
 	case TEMPLATE_NODE_KIND:
-		return "template"
+		return TEMPLATE_KIND_STRING
 	case TEMPLATE_INJECTION_NODE_KIND:
-		return "template-injection"
+		return TEMPLATE_INJECTION_KIND_STRING
 	case COMMENT_NODE_KIND:
-		return "comment"
+		return COMMENT_KIND_STRING
 	case DOCTYPE_NODE_KIND:
-		return "doctype"
+		return DOCTYPE_KIND_STRING
 	case TEXT_INJECTION_NODE_KIND:
-		return "text-injection"
+		return TEXT_INJECTION_KIND_STRING
 	case UNSAFE_TEXT_INJECTION_NODE_KIND:
-		return "unsafe-text-injection"
+		return UNSAFE_TEXT_INJECTION_KIND_STRING
 	case TEXT_NODE_KIND:
-		return "text"
+		return TEXT_KIND_STRING
 	case UNSAFE_TEXT_NODE_KIND:
-		return "unsafe-text"
+		return UNSAFE_TEXT_KIND_STRING
 	case REPEAT_NODE_KIND:
-		return "repeat"
+		return REPEAT_KIND_STRING
 	case VARIANTS_NODE_KIND:
-		return "variants"
+		return VARIANTS_KIND_STRING
 	default:
 		panic(fmt.Sprintf("wrong element kind `%d`", k))
 	}

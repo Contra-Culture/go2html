@@ -51,7 +51,6 @@ func (ecp *ElemCfgr) Class(name string) {
 }
 func (ecp *ElemCfgr) ID(name string) {
 	ecp.Attr(ID_ATTR_NAME, name)
-
 }
 func (ecp *ElemCfgr) NSClass(name string) {
 
