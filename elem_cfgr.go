@@ -15,6 +15,9 @@ type (
 	}
 )
 
+const CLASS_ATTR_NAME = "class"
+const ID_ATTR_NAME = "id"
+
 func (ecp *ElemCfgr) AttrsInjection(key string) {
 	fragment := attrsInjection(key)
 	ecp.context.InContext(
@@ -42,4 +45,17 @@ func (ecp *ElemCfgr) Attr(name string, value string) {
 			c.Append(fmt.Sprintf(" %s=\"%s\"", name, value))
 		})
 	ecp.node.AddChild(node.ATTRIBUTE_NODE_KIND, []string{name})
+}
+func (ecp *ElemCfgr) Class(name string) {
+	ecp.Attr(CLASS_ATTR_NAME, name)
+}
+func (ecp *ElemCfgr) ID(name string) {
+	ecp.Attr(ID_ATTR_NAME, name)
+
+}
+func (ecp *ElemCfgr) NSClass(name string) {
+
+}
+func (ecp *ElemCfgr) ClassWithNS(name string) {
+
 }

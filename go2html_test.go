@@ -31,6 +31,7 @@ var _ = Describe("go2html", func() {
 						t.Elem(
 							"p",
 							func(e *ElemCfgr) {
+								e.Class("p-normal")
 								e.Attr("class", "paragraph")
 							},
 							func(n *NestedNodesCfgr) {
@@ -39,6 +40,7 @@ var _ = Describe("go2html", func() {
 						t.Elem(
 							"div",
 							func(e *ElemCfgr) {
+								e.ID("wrapper")
 								e.AttrsInjection("div1-attr")
 								e.AttrValueInjection("data-ok", "div1-data-ok")
 								e.AttrValueInjection("data-confirm", "div1-data-confirm")
@@ -176,7 +178,7 @@ var _ = Describe("go2html", func() {
 								},
 							},
 						),
-					).To(Equal("<!DOCTYPE html><!-- comment text -->Some text here.Inserted text here.<p class=\"paragraph\">Inserted <b>paragraph1</b> text.</p><div title=\"Some title\" data-ok=\"1\" data-confirm=\"1\">variant div_nested_1 text<p class=\"Value-1-class\">Value-2-text</p><h1 class=\"div-header\">Header1<span>Some text here.</span></h1>no variant provided<h2 class=\"subheader\"></h2><p>Second &lt;i&gt;paragraph&lt;/i&gt;.</p><p class=\"repeatable-paragraph\">Injected paragraph text 1.</p><p class=\"repeatable-paragraph\">Injected paragraph text 2.</p><p class=\"repeatable-paragraph\">Injected paragraph text 3.</p></div>"))
+					).To(Equal("<!DOCTYPE html><!-- comment text -->Some text here.Inserted text here.<p class=\"p-normal\" class=\"paragraph\">Inserted <b>paragraph1</b> text.</p><div id=\"wrapper\" title=\"Some title\" data-ok=\"1\" data-confirm=\"1\">variant div_nested_1 text<p class=\"Value-1-class\">Value-2-text</p><h1 class=\"div-header\">Header1<span>Some text here.</span></h1>no variant provided<h2 class=\"subheader\"></h2><p>Second &lt;i&gt;paragraph&lt;/i&gt;.</p><p class=\"repeatable-paragraph\">Injected paragraph text 1.</p><p class=\"repeatable-paragraph\">Injected paragraph text 2.</p><p class=\"repeatable-paragraph\">Injected paragraph text 3.</p></div>"))
 				})
 			})
 		})
